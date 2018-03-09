@@ -43,6 +43,8 @@ import 'dart:io';
 import 'package:json_schema/json_schema.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
+import 'package:shelf/shelf_io.dart' as io;
+import 'package:shelf_static/shelf_static.dart';
 import 'package:test/test.dart';
 
 // custom <additional imports>
@@ -53,7 +55,17 @@ final Logger _logger = new Logger('test_validation');
 // custom <library test_validation>
 // end <library test_validation>
 
+
 void main([List<String> args]) {
+
+  // TODO: re-enable later when we support fragments.  
+  // Serve remotes for ref tests.
+  final specFileHandler = createStaticHandler('test/JSON-Schema-Test-Suite/remotes');
+  io.serve(specFileHandler, 'localhost', 1234);
+
+  final additionalRemotesHandler = createStaticHandler('test/additional_remotes');
+  io.serve(additionalRemotesHandler, 'localhost', 4321);
+
   if (args?.isEmpty ?? false) {
     Logger.root.onRecord.listen((LogRecord r) => print("${r.loggerName} [${r.level}]:\t${r.message}"));
     Logger.root.level = Level.OFF;
@@ -116,6 +128,177 @@ void main([List<String> args]) {
       expect(schema.schemaMap["description"], "Core schema meta-schema");
       expect(schema.validate(schema.schemaMap), true);
     });
+  });
+
+  test('nested ref properties schema construction', () async {
+    // final barSchema = JsonSchema.createSchemaWithProvidedRefs({
+    //   "type": "integer"
+    // }, {});
+
+    // final schema = JsonSchema.createSchemaWithProvidedRefs({
+    //     "properties": {
+    //         "foo": {"type": "integer"},
+    //         "bar": {"\$ref": "file:json_schema/v1/types/bar.schema.json#"}
+    //     }
+    // }, {'file:json_schema/v1/types/bar.schema.json#': barSchema});
+
+    // print(schema.schemaMap);
+    // print(schema.refMap);
+    // print(schema.resolvePath('bar'));
+  
+    // print(schema.validate({
+    //   "foo": 1,
+    //   "bar": "false",
+    // }));
+
+    final barSchema = await Schema.createSchema({
+      "properties": {
+        "foo": { "\$ref": "http://localhost:1234/integer.json#" },
+        "bar": { "\$ref": "http://localhost:4321/bar.json#" } 
+      },
+      "required": ["foo", "bar"]
+    });
+
+    // final schema = await Schema.createSchema({
+    //     "properties": {
+    //         "foo": {"type": "integer"},
+    //         "bar": {"\$ref": "http://json-schema.org/draft-04/schema.json#"}
+    //     }
+    // });
+
+    // print(schema.schemaMap);
+    // print(schema.refMap);
+    // print(schema.resolvePath('bar'));
+    print('\nVALIDTATION OUTPUT!\n');
+
+    var isValid = barSchema.validate({
+      "foo": 2,
+      "bar": {
+        "baz": "test"
+      }
+    });
+
+    print('\nTEST OUTPUT!\n');
+    print(isValid);
+
+    expect(isValid, isTrue);
+  
+    // print(schema.validate({
+    //   "foo": 1,
+    //   "bar": { "type": "integer" },
+    // }));
+  });
+
+  test('nested ref items schema construction', () async {
+    // final barSchema = JsonSchema.createSchemaWithProvidedRefs({
+    //   "type": "integer"
+    // }, {});
+
+    // final schema = JsonSchema.createSchemaWithProvidedRefs({
+    //     "properties": {
+    //         "foo": {"type": "integer"},
+    //         "bar": {"\$ref": "file:json_schema/v1/types/bar.schema.json#"}
+    //     }
+    // }, {'file:json_schema/v1/types/bar.schema.json#': barSchema});
+
+    // print(schema.schemaMap);
+    // print(schema.refMap);
+    // print(schema.resolvePath('bar'));
+  
+    // print(schema.validate({
+    //   "foo": 1,
+    //   "bar": "false",
+    // }));
+
+    final barSchema = await Schema.createSchema({
+      "items": { "\$ref": "http://localhost:4321/bar.json#" },
+    });
+
+    // final schema = await Schema.createSchema({
+    //     "properties": {
+    //         "foo": {"type": "integer"},
+    //         "bar": {"\$ref": "http://json-schema.org/draft-04/schema.json#"}
+    //     }
+    // });
+
+    // print(schema.schemaMap);
+    // print(schema.refMap);
+    // print(schema.resolvePath('bar'));
+    print('\nVALIDTATION OUTPUT!\n');
+
+    var isValid = barSchema.validate([
+      {
+        "baz": "test"
+      }
+    ]);
+
+    print('\nTEST OUTPUT!\n');
+    print(isValid);
+
+    expect(isValid, isTrue);
+  
+    // print(schema.validate({
+    //   "foo": 1,
+    //   "bar": { "type": "integer" },
+    // }));
+  });
+
+  test('nested ref anyOf schema construction', () async {
+    // final barSchema = JsonSchema.createSchemaWithProvidedRefs({
+    //   "type": "integer"
+    // }, {});
+
+    // final schema = JsonSchema.createSchemaWithProvidedRefs({
+    //     "properties": {
+    //         "foo": {"type": "integer"},
+    //         "bar": {"\$ref": "file:json_schema/v1/types/bar.schema.json#"}
+    //     }
+    // }, {'file:json_schema/v1/types/bar.schema.json#': barSchema});
+
+    // print(schema.schemaMap);
+    // print(schema.refMap);
+    // print(schema.resolvePath('bar'));
+  
+    // print(schema.validate({
+    //   "foo": 1,
+    //   "bar": "false",
+    // }));
+
+    final barSchema = await Schema.createSchema({
+      "items": {
+        "not": {"anyOf": [
+          { "\$ref": "http://localhost:1234/integer.json#" },
+          // { "type": "integer" },
+          { "\$ref": "http://localhost:4321/string.json#" },
+          // { "type": "string" },
+          // { "\$ref": "http://localhost:4321/bar.json#" },
+        ]
+      }}
+    });
+
+    // final schema = await Schema.createSchema({
+    //     "properties": {
+    //         "foo": {"type": "integer"},
+    //         "bar": {"\$ref": "http://json-schema.org/draft-04/schema.json#"}
+    //     }
+    // });
+
+    // print(schema.schemaMap);
+    // print(schema.refMap);
+    // print(schema.resolvePath('bar'));
+    print('\nVALIDTATION OUTPUT!\n');
+
+    var isValid = barSchema.validate([3.4]);
+
+    print('\nTEST OUTPUT!\n');
+    print(isValid);
+
+    expect(isValid, isTrue);
+  
+    // print(schema.validate({
+    //   "foo": 1,
+    //   "bar": { "type": "integer" },
+    // }));
   });
 
 // end <main>

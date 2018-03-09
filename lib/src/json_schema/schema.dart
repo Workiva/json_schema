@@ -108,14 +108,21 @@ class Schema {
   static Future<Schema> createSchemaFromUrl(String schemaUrl) {
     Uri uri = Uri.parse(schemaUrl);
     if (uri.scheme == 'http') {
-      _logger.info('Getting url $uri');
+      print('Getting url $uri');
       return new HttpClient().getUrl(uri).then((HttpClientRequest request) {
         request.followRedirects = true;
         return request.close();
       }).then((HttpClientResponse response) {
+        print('!!!!!! GOT A RESPONSE for $uri');
         return response.transform(new convert.Utf8Decoder()).join().then((schemaText) {
           Map map = convert.JSON.decode(schemaText);
-          return createSchema(map);
+          var ret = createSchema(map);
+          print('DONE FETCHING SCHEMA');
+          print(ret.then((s){
+            print('DONE CONSTRUCTING SCHEMA');
+            // print(s);
+          }));
+          return ret;
         });
       });
     } else if (uri.scheme == 'file' || uri.scheme == '') {
@@ -185,7 +192,10 @@ class Schema {
     throw _intError(key, value);
   }
 
-  _addSchema(String path, Schema schema) => _refMap[path] = schema;
+  _addSchema(String path, Schema schema) {
+    print('ADD SCHEMA FOR PATH $path WITH SCHEMA: $schema');
+    return _refMap[path] = schema;
+  } 
 
   _getMultipleOf(dynamic value) {
     if (value is! num) throw _numError("multiple", value);
@@ -223,7 +233,9 @@ class Schema {
 
   _makeSchema(String path, dynamic schema, assigner(Schema rhs)) {
     if (schema is! Map) throw _schemaError(path, schema);
-    if (_registerSchemaRef(path, schema)) {
+    var isRef = _registerSchemaRef(path, schema);
+    if (isRef) print('PATH $path is REF: $schema');
+    if (isRef && path[0] == '#') {
       _schemaAssignments.add(() => assigner(_resolvePath(path)));
     } else {
       assigner(_createSubSchema(schema, path));
@@ -232,8 +244,13 @@ class Schema {
 
   _getProperties(dynamic value) {
     if (value is Map) {
-      value.forEach((property, subSchema) =>
-          _makeSchema("$_path/properties/$property", subSchema, (rhs) => _properties[property] = rhs));
+      value.forEach((property, subSchema) {
+        print('GET PROPERTIES LOOP');
+        print('property: $property');
+        print('_makeSchema: $subSchema');
+        var ret = _makeSchema("$_path/properties/$property", subSchema, (rhs) => _properties[property] = rhs); 
+        return ret;
+      });
     } else {
       throw _objectError("properties", value);
     }
@@ -379,12 +396,17 @@ class Schema {
   }
 
   _getRef(dynamic value) {
+    print('GET REF');
     if (value is String) {
       _ref = value;
       if (_ref.length == 0) throw _error("\$ref must be non-empty string");
       if (_ref[0] != '#') {
-        var refSchemaFuture = createSchemaFromUrl(_ref).then((schema) => _addSchema(_ref, schema));
-        _retrievalRequests.add(refSchemaFuture);
+        print('ADD A REF TO RETRIEVAL REQUESTS');
+        var refSchemaFuture = createSchemaFromUrl(_ref).then((schema) {
+          print('GOT SCHEMA FROM URL $_ref: $schema');
+          return _addSchema(_ref, schema);
+        });
+        _root._retrievalRequests.add(refSchemaFuture);
       }
     } else {
       throw _stringError(r"$ref", value);
@@ -479,7 +501,9 @@ class Schema {
     if (_exclusiveMaximum != null && _maximum == null) throw _error("exclusiveMaximum requires maximum");
 
     if (_root == this) {
+      print('CALLING SCHEMA ASSIGNMENTS: $_schemaAssignments');
       _schemaAssignments.forEach((assignment) => assignment());
+      print('_retrievalRequests: $_retrievalRequests');
       if (_retrievalRequests.isNotEmpty) {
         Future.wait(_retrievalRequests).then((_) => _thisCompleter.complete(_resolvePath('#')));
       } else {
@@ -521,8 +545,13 @@ class Schema {
   }
 
   Schema _resolvePath(String original) {
+    print('RESOLVE PATH');
     String path = endPath(original);
+    print(original);
+    print(path);
     Schema result = _refMap[path];
+    print(result);
+    // print(_refMap);
     if (result == null) {
       var schema = _freeFormMap[path];
       if (schema is! Map) throw _schemaError("free-form property $original at $path", schema);
@@ -531,12 +560,16 @@ class Schema {
     return result;
   }
 
+  /// Checks if a [schemaDefinition] has a $ref.
+  /// If it does, it adds the ref to _shemaRefs at the path key and returns true.
   bool _registerSchemaRef(String path, dynamic schemaDefinition) {
     if (schemaDefinition is Map) {
       dynamic ref = schemaDefinition[r"$ref"];
       if (ref != null) {
-        if (ref is String) {
+        if (ref is String) { 
+          if (ref[0] != '#') return false;
           _logger.info("Linking $path to $ref");
+          print("Linking $path to $ref");
           _schemaRefs[path] = ref;
           return true;
         } else {
@@ -550,6 +583,7 @@ class Schema {
   static String _normalizePath(String path) => path.replaceAll('~', '~0').replaceAll('/', '~1').replaceAll('%', '%25');
 
   Schema _createSubSchema(dynamic schemaDefinition, String path) {
+    print('CREATE SUB SCHEMA FOR PATH $path, defn: $schemaDefinition');
     assert(!_schemaRefs.containsKey(path));
     assert(!_refMap.containsKey(path));
     return new Schema._fromMap(_root, schemaDefinition, path);

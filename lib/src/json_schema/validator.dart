@@ -230,6 +230,7 @@ class Validator {
   }
 
   void _validateAnyOf(Schema schema, instance) {
+    print(schema);
     if (!schema._anyOf.any((s) => new Validator(s).validate(instance))) {
       _err("${schema._path}/anyOf: anyOf violated ($instance, ${schema._anyOf})");
     }
@@ -307,12 +308,19 @@ class Validator {
   }
 
   void _objectPropertyValidation(Schema schema, Map instance) {
+    print('OBJECT PROPERTY VALIDATION FOR SCHEMA: $schema ON INSTANCE: $instance');
     bool propMustValidate = schema._additionalProperties != null && !schema._additionalProperties;
 
     instance.forEach((k, v) {
       bool propCovered = false;
       Schema propSchema = schema._properties[k];
+      print(schema._refMap);
+      print('VALIDATING SUB PROP: $k WITH VALUE: $v AGAINST SCHEMA: $propSchema');
       if (propSchema != null) {
+        // UPDATED: if the propSchema is a ref, look it up.
+        // if (propSchema.ref != null) {
+        //   propSchema = schema._refMap[propSchema.ref];
+        // } 
         assert(propSchema != null);
         _validate(propSchema, v);
         propCovered = true;
@@ -380,6 +388,11 @@ class Validator {
   }
 
   void _validate(Schema schema, dynamic instance) {
+    if (schema.ref != null) {
+      print(schema);
+      schema = schema._root._refMap[schema.ref];
+      print('VALIDATING SCHEMA IS A REF: ${schema.ref},  $schema AGAINST INSTANCE: $instance');
+    }
     _typeValidation(schema, instance);
     _enumValidation(schema, instance);
     if (instance is List) _itemsValidation(schema, instance);
