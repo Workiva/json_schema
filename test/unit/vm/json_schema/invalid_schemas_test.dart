@@ -59,7 +59,7 @@ void main([List<String> args]) {
     String shortName = path.basename(testEntry.path);
     group("Invalid schema: ${shortName}", () {
       if (testEntry is File) {
-        List tests = convert.JSON.decode((testEntry as File).readAsStringSync());
+        List tests = convert.jsonDecode((testEntry as File).readAsStringSync());
         tests.forEach((testObject) {
           var schemaData = testObject["schema"];
           var description = testObject["description"];

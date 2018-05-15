@@ -114,21 +114,21 @@ class Schema {
         return request.close();
       }).then((HttpClientResponse response) {
         return response.transform(new convert.Utf8Decoder()).join().then((schemaText) {
-          Map map = convert.JSON.decode(schemaText);
+          Map map = convert.jsonDecode(schemaText);
           return createSchema(map);
         });
       });
     } else if (uri.scheme == 'file' || uri.scheme == '') {
       return new File(uri.scheme == 'file' ? uri.toFilePath() : schemaUrl)
           .readAsString()
-          .then((text) => createSchema(convert.JSON.decode(text)));
+          .then((text) => createSchema(convert.jsonDecode(text)));
     } else {
       throw new FormatException("Url schemd must be http, file, or empty: $schemaUrl");
     }
   }
 
   /// Create a schema from a [data]
-  ///  Typically [data] is result of JSON.decode(jsonSchemaString)
+  ///  Typically [data] is result of jsonDecode(jsonSchemaString)
   static Future<Schema> createSchema(Map data) => new Schema._fromRootMap(data)._thisCompleter.future;
 
   /// Validate [instance] against this schema

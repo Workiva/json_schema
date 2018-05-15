@@ -1,7 +1,7 @@
 language: dart
 sudo: false
 dart:
-  - stable
+  - dev
 script:
   - pub get --packages-dir
   - pub run dependency_validator --ignore dart_style,coverage

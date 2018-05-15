@@ -1,3 +1,8 @@
+## 1.0.9
+
+* Remove usage of Dart 1 upper-case constants.
+* Update SDK to a Dart 2.0 development branch.
+
 ## 1.0.8
 
 * Code cleanup

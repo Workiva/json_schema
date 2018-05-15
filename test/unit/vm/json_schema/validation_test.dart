@@ -84,7 +84,7 @@ void main([List<String> args]) {
           'refRemote.json', // seems to require webserver running to vend files
         ].contains(path.basename(testEntry.path))) return;
 
-        List tests = convert.JSON.decode((testEntry as File).readAsStringSync());
+        List tests = convert.jsonDecode((testEntry as File).readAsStringSync());
         tests.forEach((testEntry) {
           var schemaData = testEntry["schema"];
           var description = testEntry["description"];
