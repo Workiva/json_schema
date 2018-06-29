@@ -70,7 +70,7 @@ main() {
   //////////////////////////////////////////////////////////////////////
   url = "grades_schema.json";
   Schema.createSchemaFromUrl(url).then((schema) {
-    var grades = convert.JSON.decode('''
+    var grades = convert.jsonDecode('''
 {
     "semesters": [
         {

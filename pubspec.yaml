@@ -1,5 +1,5 @@
 name: json_schema
-version: 1.0.8
+version: 1.0.9
 
 authors:
   - Michael Carter <michael.carter@workiva.com>
@@ -9,7 +9,7 @@ homepage: https://github.com/workiva/json_schema
 description: >
   Provide support for validating instances against json schema
 environment:
-  sdk: ">=1.8.2 <2.0.0"
+  sdk: ">=2.0.0-dev.49.0 <3.0.0"
 
 dependencies:
   args: ">=0.11.0 <2.0.0"
