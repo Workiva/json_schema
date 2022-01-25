@@ -99,6 +99,6 @@ main() {
     }
   ];
 
-  print('${json.encode(workivaLocations)} => ${schema.validate(workivaLocations)}');
-  print('${json.encode(badLocations)} => ${schema.validate(badLocations)}');
+  print('${json.encode(workivaLocations)} => ${schema.validateWithResults(workivaLocations)}');
+  print('${json.encode(badLocations)} => ${schema.validateWithResults(badLocations)}');
 }

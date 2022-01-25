@@ -57,8 +57,8 @@ main() async {
     'longitude': 7836,
   };
 
-  print('$workivaAmes => ${schema.validate(workivaAmes)}'); // true
-  print('$nowhereville => ${schema.validate(nowhereville)}'); // false
+  print('$workivaAmes => ${schema.validateWithResults(workivaAmes)}'); // valid
+  print('$nowhereville => ${schema.validateWithResults(nowhereville)}'); // invalid
 
   // Exit the process cleanly (VM Only).
   exit(0);

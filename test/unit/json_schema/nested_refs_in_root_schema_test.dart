@@ -12,9 +12,8 @@ main() {
         "required": ["foo", "bar"]
       });
 
-      final isValid = barSchema.validate({"foo": 2, "bar": "test"});
-
-      final isInvalid = barSchema.validate({"foo": 2, "bar": 4});
+      final isValid = barSchema.validateWithResults({"foo": 2, "bar": "test"}).errors.isEmpty;
+      final isInvalid = barSchema.validateWithResults({"foo": 2, "bar": 4}).errors.isEmpty;
 
       expect(isValid, isTrue);
       expect(isInvalid, isFalse);
@@ -25,8 +24,8 @@ main() {
         "items": {"\$ref": "http://localhost:1234/integer.json"}
       });
 
-      final isValid = schema.validate([1, 2, 3, 4]);
-      final isInvalid = schema.validate([1, 2, 3, '4']);
+      final isValid = schema.validateWithResults([1, 2, 3, 4]).errors.isEmpty;
+      final isInvalid = schema.validateWithResults([1, 2, 3, '4']).errors.isEmpty;
 
       expect(isValid, isTrue);
       expect(isInvalid, isFalse);
@@ -44,8 +43,8 @@ main() {
         }
       });
 
-      final isValid = schema.validate([3.4]);
-      final isInvalid = schema.validate(['test']);
+      final isValid = schema.validateWithResults([3.4]).errors.isEmpty;
+      final isInvalid = schema.validateWithResults(['test']).errors.isEmpty;
 
       expect(isValid, isTrue);
       expect(isInvalid, isFalse);
@@ -90,33 +89,39 @@ main() {
       refProvider: syncRefJsonProvider,
     );
 
-    final isValid = schema.validate({
-      "meta": "a string",
-      "nodes": [
-        {
-          "value": 123,
-          "subtree": {"meta": "a string", "nodes": []}
-        }
-      ]
-    });
+    final isValid = schema
+        .validateWithResults({
+          "meta": "a string",
+          "nodes": [
+            {
+              "value": 123,
+              "subtree": {"meta": "a string", "nodes": []}
+            }
+          ]
+        })
+        .errors
+        .isEmpty;
 
-    final isInvalid = schema.validate({
-      "meta": "a string",
-      "nodes": [
-        {
-          "value": 123,
-          "subtree": {
-            "meta": "a string",
-            "nodes": [
-              {
-                "value": 123,
-                "subtree": {"meta": 123, "nodes": []}
+    final isInvalid = schema
+        .validateWithResults({
+          "meta": "a string",
+          "nodes": [
+            {
+              "value": 123,
+              "subtree": {
+                "meta": "a string",
+                "nodes": [
+                  {
+                    "value": 123,
+                    "subtree": {"meta": 123, "nodes": []}
+                  }
+                ]
               }
-            ]
-          }
-        }
-      ]
-    });
+            }
+          ]
+        })
+        .errors
+        .isEmpty;
 
     expect(isValid, isTrue);
     expect(isInvalid, isFalse);

@@ -47,7 +47,7 @@ void main() {
         // that the schema satisfies the schema for schemas.
         final url = version;
         JsonSchema.createFromUrl(url).then(expectAsync1((schema) {
-          expect(schema.validate(schema.schemaMap), isTrue);
+          expect(schema.validateWithResults(schema.schemaMap).errors.isEmpty, isTrue);
         }));
       });
     }

@@ -50,8 +50,8 @@ main() {
   final str = 'hi';
 
   JsonSchema.createAsync(mustBeIntegerSchema).then((schema) {
-    print('$n => ${schema.validate(n)}');
-    print('$decimals => ${schema.validate(decimals)}');
-    print('$str => ${schema.validate(str)}');
+    print('$n => ${schema.validateWithResults(n)}');
+    print('$decimals => ${schema.validateWithResults(decimals)}');
+    print('$str => ${schema.validateWithResults(str)}');
   });
 }

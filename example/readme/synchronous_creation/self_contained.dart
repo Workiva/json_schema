@@ -51,7 +51,7 @@ main() {
   // Construct the schema from the schema map or JSON string.
   final schema = JsonSchema.create(mustBeIntegerSchemaMap);
 
-  print('$n => ${schema.validate(n)}'); // true
-  print('$decimals => ${schema.validate(decimals)}'); // false
-  print('$str => ${schema.validate(str)}'); // false
+  print('$n => ${schema.validateWithResults(n)}'); // valid
+  print('$decimals => ${schema.validateWithResults(decimals)}'); // invalid
+  print('$str => ${schema.validateWithResults(str)}'); // invalid
 }

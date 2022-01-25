@@ -57,9 +57,9 @@ main() async {
   final decimalsArray = [3.14, 1.2, 5.8];
   final strArray = ['hello', 'world'];
 
-  print('$numbersArray => ${schema.validate(numbersArray)}'); // true
-  print('$decimalsArray => ${schema.validate(decimalsArray)}'); // false
-  print('$strArray => ${schema.validate(strArray)}'); // false
+  print('$numbersArray => ${schema.validateWithResults(numbersArray)}'); // valid
+  print('$decimalsArray => ${schema.validateWithResults(decimalsArray)}'); // invalid
+  print('$strArray => ${schema.validateWithResults(strArray)}'); // invalid
 
   // Exit the process cleanly (VM Only).
   exit(0);

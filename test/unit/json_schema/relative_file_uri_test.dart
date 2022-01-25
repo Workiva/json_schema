@@ -9,8 +9,8 @@ main() {
     // this assumes that tests are run from the root directory of the project
     final schema = await JsonSchema.createFromUrl('test/relative_refs/root.json');
 
-    expect(schema.validate({"string": 123, "integer": 123}), isFalse);
-    expect(schema.validate({"string": "a string", "integer": "a string"}), isFalse);
-    expect(schema.validate({"string": "a string", "integer": 123}), isTrue);
+    expect(schema.validateWithResults({"string": 123, "integer": 123}).errors.isEmpty, isFalse);
+    expect(schema.validateWithResults({"string": "a string", "integer": "a string"}).errors.isEmpty, isFalse);
+    expect(schema.validateWithResults({"string": "a string", "integer": 123}).errors.isEmpty, isTrue);
   });
 }

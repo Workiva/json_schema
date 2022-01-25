@@ -63,6 +63,25 @@ class Instance {
   toString() => data.toString();
 }
 
+/// The result of validating data against a schema
+class ValidationResults {
+  ValidationResults(errors, warnings) {
+    this.errors = List.of(errors);
+    this.warnings = List.of(warnings);
+  }
+
+  /// Correctness issues discovered by validation.
+  List<ValidationError> errors = [];
+
+  /// Potential issues
+  List<ValidationError> warnings = [];
+
+  @override
+  String toString() {
+    return '${errors.isEmpty ? 'VALID' : 'INVALID'}${errors.isEmpty ? ', Errors: ${errors}' : ''}${warnings.isEmpty ? ', Warnings: ${warnings}' : ''}';
+  }
+}
+
 class ValidationError {
   ValidationError._(this.instancePath, this.schemaPath, this.message);
 
@@ -89,13 +108,15 @@ class Validator {
     }
   }
 
+  ValidationResults _results;
+
+  ValidationResults get results => _results;
+
+  @Deprecated('Use validateWithResults and ValidationResults.errors.map((e) => e.toString()).toList() instead')
   List<String> get errors => _errors.map((e) => e.toString()).toList();
 
-  List<String> get warnings => _warnings.map((e) => e.toString()).toList();
-
+  @Deprecated('Use validateWithResults and ValidationResults.errors instead')
   List<ValidationError> get errorObjects => _errors;
-
-  List<ValidationError> get warningObjects => _warnings;
 
   bool _validateFormats;
 
@@ -106,17 +127,13 @@ class Validator {
   /// given context.
   List<int> _evaluatedItemsContext = [];
 
-  /// Validate the [instance] against the this validator's schema
-  bool validate(dynamic instance,
-      {bool reportMultipleErrors = false,
-      bool parseJson = false,
-      bool validateFormats,
-      bool treatWarningsAsErrors = false}) {
+  /// Validate the [instance] against the this validator's schema, returning results
+  ValidationResults validateWithResults(dynamic instance,
+      {bool reportMultipleErrors = false, bool parseJson = false, bool validateFormats}) {
     // Reference: https://json-schema.org/draft/2019-09/release-notes.html#format-vocabulary
     // By default, formats are validated on a best-effort basis from draft4 through draft7.
     // Starting with Draft 2019-09, formats shouldn't be validated by default.
     _validateFormats = validateFormats ?? _rootSchema.schemaVersion <= SchemaVersion.draft7;
-    _treatWarningsAsErrors = treatWarningsAsErrors;
 
     dynamic data = instance;
     if (parseJson && instance is String) {
@@ -127,22 +144,33 @@ class Validator {
       }
     }
 
+    _errors = [];
+    _warnings = [];
     _reportMultipleErrors = reportMultipleErrors;
     _errors = [];
     if (!_reportMultipleErrors) {
       try {
         _validate(_rootSchema, data);
-        return true;
+        return ValidationResults(_errors, _warnings);
       } on FormatException {
-        return false;
+        return ValidationResults(_errors, _warnings);
       } catch (e) {
         _logger.shout('Unexpected Exception: $e');
-        return false;
+        return null;
       }
     }
 
     _validate(_rootSchema, data);
-    return _errors.isEmpty && (!treatWarningsAsErrors || _warnings.isEmpty);
+    return ValidationResults(_errors, _warnings);
+  }
+
+  /// Validate the [instance] against the this validator's schema
+  @Deprecated('Use validateWithResults instead')
+  bool validate(dynamic instance, {bool reportMultipleErrors = false, bool parseJson = false, bool validateFormats}) {
+    return validateWithResults(instance,
+            reportMultipleErrors: reportMultipleErrors, parseJson: parseJson, validateFormats: validateFormats)
+        .errors
+        .isEmpty;
   }
 
   static bool _typeMatch(SchemaType type, JsonSchema schema, dynamic instance) {
@@ -320,7 +348,8 @@ class Validator {
     if (schema.contains != null) {
       final maxContains = schema.maxContains;
       final minContains = schema.minContains;
-      final containsItems = instance.data.where((item) => Validator(schema.contains).validate(item)).toList();
+      final containsItems =
+          instance.data.where((item) => Validator(schema.contains).validateWithResults(item).errors.isEmpty).toList();
       if (minContains is int && containsItems.length < minContains) {
         _err('minContains violated: $instance', instance.path, schema.path);
       }
@@ -354,7 +383,7 @@ class Validator {
   /// Helper function to capture the number of evaluatedItems and update the local count.
   bool _validateAndCaptureEvaluations(JsonSchema s, Instance instance) {
     var v = Validator._(s, inEvaluatedItemsContext: _isInEvaluatedItemContext);
-    var isValid = v.validate(instance);
+    var isValid = v.validateWithResults(instance).errors.isEmpty;
     if (isValid) {
       _setMaxEvaluatedItemCount(v._evaluatedItemCount);
     }
@@ -387,7 +416,7 @@ class Validator {
   }
 
   void _validateNot(JsonSchema schema, Instance instance) {
-    if (Validator(schema.notSchema).validate(instance)) {
+    if (Validator(schema.notSchema).validateWithResults(instance).errors.isEmpty) {
       // TODO: deal with .notSchema
       _err('${schema.notSchema.path}: not violated', instance.path, schema.notSchema.path);
     }
@@ -602,7 +631,7 @@ class Validator {
   void _schemaDependenciesValidation(JsonSchema schema, Instance instance) {
     schema.schemaDependencies.forEach((k, otherSchema) {
       if (instance.data.containsKey(k)) {
-        if (!Validator(otherSchema).validate(instance)) {
+        if (Validator(otherSchema).validateWithResults(instance).errors.isNotEmpty) {
           _err('prop $k violated schema dependency', instance.path, otherSchema.path);
         }
       }
@@ -697,7 +726,7 @@ class Validator {
       // Bail out early if no 'then' or 'else' schemas exist.
       if (schema.thenSchema == null && schema.elseSchema == null) return true;
 
-      if (schema.ifSchema.validate(instance)) {
+      if (schema.ifSchema.validateWithResults(instance).errors.isEmpty) {
         // Bail out early if no "then" is specified.
         if (schema.thenSchema == null) return true;
         if (!_validateAndCaptureEvaluations(schema.thenSchema, instance)) {
