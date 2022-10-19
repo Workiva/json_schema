@@ -45,6 +45,7 @@ import 'package:rfc_6901/rfc_6901.dart';
 import 'package:json_schema/src/json_schema/constants.dart';
 import 'package:json_schema/src/json_schema/models/custom_keyword.dart';
 import 'package:json_schema/src/json_schema/models/custom_vocabulary.dart';
+import 'package:json_schema/src/json_schema/models/path_resolution_strategy.dart';
 import 'package:json_schema/src/json_schema/models/ref_provider.dart';
 import 'package:json_schema/src/json_schema/models/schema_path_pair.dart';
 import 'package:json_schema/src/json_schema/models/schema_version.dart';
@@ -52,7 +53,6 @@ import 'package:json_schema/src/json_schema/models/schema_type.dart';
 import 'package:json_schema/src/json_schema/models/typedefs.dart';
 import 'package:json_schema/src/json_schema/models/validation_context.dart';
 import 'package:json_schema/src/json_schema/models/validation_results.dart';
-
 import 'package:json_schema/src/json_schema/utils/format_exceptions.dart';
 import 'package:json_schema/src/json_schema/utils/type_validators.dart';
 import 'package:json_schema/src/json_schema/utils/utils.dart';
@@ -346,9 +346,7 @@ class JsonSchema {
     } else if (_root.schemaVersion == SchemaVersion.draft6) {
       accessMap = _accessMapV6;
     } else if (_root.schemaVersion >= SchemaVersion.draft2019_09) {
-      final vocabMap = Map()
-        ..addAll(_vocabMaps)
-        ..addAll(_customVocabMap);
+      final vocabMap = Map()..addAll(_vocabMaps)..addAll(_customVocabMap);
       this.metaschemaVocabulary.keys.forEach((vocabUri) {
         accessMap.addAll(vocabMap[vocabUri.toString()]);
       });
@@ -559,7 +557,8 @@ class JsonSchema {
   }
 
   /// Given a [Uri] path, find the ref'd [JsonSchema] from the map.
-  JsonSchema _getSchemaFromPath(Uri pathUri, [Set<Uri> refsEncountered]) {
+  JsonSchema _getSchemaFromPath(Uri pathUri,
+      {Set<Uri> refsEncountered, PathResolutionStrategy pathResolutionStrategy}) {
     // Store encountered refs to avoid cycles.
     refsEncountered ??= {};
 
@@ -595,7 +594,8 @@ class JsonSchema {
     // Follow JSON Pointer path of fragments if provided.
     if (pathUri.fragment.isNotEmpty) {
       final List<String> fragments = Uri.parse(pathUri.fragment).pathSegments;
-      final foundSchema = _recursiveResolvePath(pathUri, fragments, baseSchema, refsEncountered);
+      final foundSchema = _recursiveResolvePath(pathUri, fragments, baseSchema, refsEncountered,
+          pathResolutionStrategy: pathResolutionStrategy);
       _memomizedResults[currentPair] = foundSchema;
       return foundSchema;
     }
@@ -604,7 +604,7 @@ class JsonSchema {
     return baseSchema;
   }
 
-  // When there are 2 possible path to be resolve, traverse both paths.
+  // When there are 2 possible paths to be resolve, traverse both paths.
   JsonSchema _resolveParallelPaths(
     Uri pathUri, // The path being resolved
     List<String> fragments, // A list of fragments being traversed.
@@ -667,7 +667,9 @@ class JsonSchema {
   }
 
   JsonSchema _recursiveResolvePath(Uri pathUri, List<String> fragments, JsonSchema baseSchema, Set<Uri> refsEncountered,
-      {bool skipInitialRefCheck = false}) {
+      {bool skipInitialRefCheck = false,
+      PathResolutionStrategy pathResolutionStrategy,
+      bool shouldCheckSubschemas = true}) {
     // Set of properties that are ignored when set beside a `$ref`.
     final Set<String> consts = Set.of([r'$id', r'$schema', r'$comment']);
     if (fragments.isNotEmpty) {
@@ -711,13 +713,41 @@ class JsonSchema {
                 // Fall back to original propertyKey if it can't be unescaped.
               }
             }
-            currentSchema = schemaValues[propertyKey];
+            final propertyValue = schemaValues[propertyKey];
 
             // Fetched properties must be valid schemas.
-            if (currentSchema is! JsonSchema) {
-              throw FormatException(
-                  'Failed to get schema at path: "$fragment/$propertyKey". Property must be a valid schema : $currentSchema');
+            if (propertyValue is! JsonSchema) {
+              if (pathResolutionStrategy != null && shouldCheckSubschemas) {
+                final subschemasToCheck = [currentSchema.allOf, currentSchema.anyOf, currentSchema.oneOf];
+                final remainingFragments = List<String>.from(fragments)..removeRange(0, i - 1);
+                for (List<JsonSchema> subschemas in subschemasToCheck) {
+                  for (JsonSchema schema in subschemas) {
+                    JsonSchema resolvedSchemaFromSubschemas;
+                    try {
+                      resolvedSchemaFromSubschemas = _recursiveResolvePath(
+                        pathUri,
+                        remainingFragments,
+                        schema,
+                        refsEncountered,
+                        pathResolutionStrategy: pathResolutionStrategy,
+                        shouldCheckSubschemas: pathResolutionStrategy == PathResolutionStrategy.recursiveFullMatch,
+                      );
+                    } catch (e) {
+                      // Do nothing if subschema resolution fails, will throw later.
+                    }
+
+                    if (resolvedSchemaFromSubschemas != null) {
+                      return resolvedSchemaFromSubschemas;
+                    }
+                  }
+                }
+              } else {
+                throw FormatException(
+                    'Failed to get schema at path: "$fragment/$propertyKey". Property must be a valid schema : $propertyValue');
+              }
             }
+
+            currentSchema = propertyValue;
           } else if (schemaValues is List<JsonSchema>) {
             // List properties use the following fragment to fetch the value by index.
             i += 1;
@@ -780,7 +810,7 @@ class JsonSchema {
       throw FormatException('Failed to get schema at path: "${schema.ref}". Cycle detected.');
     }
 
-    var resolvedSchema = schema._getSchemaFromPath(schema.ref, refsEncountered);
+    var resolvedSchema = schema._getSchemaFromPath(schema.ref, refsEncountered: refsEncountered);
     if (resolvedSchema == null) {
       throw ArgumentError('Failed to get schema at path: "$pathUri". Can\'t resolve reference within the schema.');
     }
@@ -1455,7 +1485,8 @@ class JsonSchema {
   }
 
   /// Get a nested [JsonSchema] from a path.
-  JsonSchema resolvePath(Uri path) => _getSchemaFromPath(path);
+  JsonSchema resolvePath(Uri path, {PathResolutionStrategy resolutionStrategy}) =>
+      _getSchemaFromPath(path, pathResolutionStrategy: resolutionStrategy);
 
   /// Get a [JsonSchema] from the dynamicParent with the given anchor. Returns null if none exists.
   JsonSchema resolveDynamicAnchor(String dynamicAnchor, {JsonSchema dynamicParent}) =>

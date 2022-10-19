@@ -36,12 +36,12 @@
 //     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //     THE SOFTWARE.
 
-export 'package:json_schema/src/json_schema/json_schema.dart' show JsonSchema;
-export 'package:json_schema/src/json_schema/models/custom_keyword.dart' show CustomKeyword;
-export 'package:json_schema/src/json_schema/models/custom_vocabulary.dart' show CustomVocabulary;
-export 'package:json_schema/src/json_schema/models/path_resolution_strategy.dart' show PathResolutionStrategy;
-export 'package:json_schema/src/json_schema/models/ref_provider.dart' show RefProvider, defaultUrlRefProvider;
-export 'package:json_schema/src/json_schema/models/schema_type.dart' show SchemaType;
-export 'package:json_schema/src/json_schema/models/schema_version.dart' show SchemaVersion;
-export 'package:json_schema/src/json_schema/models/validation_context.dart' show ValidationContext;
-export 'package:json_schema/src/json_schema/validator.dart' show Validator, ValidationError;
+/// Enum to change resolution strategy for the resolvePath method.
+enum PathResolutionStrategy {
+  // Will recursively search allOf, anyOf, and oneOf schemas until the first matching accessor is found.
+  // Use this if you don't expect colliding values for speed.
+  recursiveFirstMatch,
+  // Will recursively search allOf, anyOf, and oneOf schemas until the all matching accessors are found.
+  // Use this if colliding values can occur and you need to ensure the full path is matched.
+  recursiveFullMatch,
+}
