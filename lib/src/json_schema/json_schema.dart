@@ -733,9 +733,10 @@ class JsonSchema {
                         shouldCheckSubschemas: pathResolutionStrategy == PathResolutionStrategy.recursiveFullMatch,
                       );
                     } catch (e) {
-                      // Do nothing if subschema resolution fails, will throw later.
+                      // Do nothing if subschema resolution fails.
                     }
 
+                    // If a schema was successfully resolved from checking subschemas, return the result.
                     if (resolvedSchemaFromSubschemas != null) {
                       return resolvedSchemaFromSubschemas;
                     }
