@@ -243,7 +243,7 @@ class Validator {
       );
     }
     final pattern = schema.pattern;
-    if (pattern != null && !pattern.hasMatch(instance.data)) {
+    if (pattern != null && instance.data != pattern.stringMatch(instance.data)) {
       _err(
         'pattern violated ($instance vs $pattern)',
         instance.path,
