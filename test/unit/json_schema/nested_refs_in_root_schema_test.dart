@@ -12,8 +12,8 @@ main() {
         "required": ["foo", "bar"]
       });
 
-      final isValid = barSchema.validate({"foo": 2, "bar": "test"}).isValid;
-      final isInvalid = barSchema.validate({"foo": 2, "bar": 4}).isValid;
+      final isValid = barSchema.validate({"foo": 2, "bar": "test"})!.isValid;
+      final isInvalid = barSchema.validate({"foo": 2, "bar": 4})!.isValid;
 
       expect(isValid, isTrue);
       expect(isInvalid, isFalse);
@@ -24,8 +24,8 @@ main() {
         "items": {"\$ref": "http://localhost:1234/integer.json"}
       });
 
-      final isValid = schema.validate([1, 2, 3, 4]).isValid;
-      final isInvalid = schema.validate([1, 2, 3, '4']).isValid;
+      final isValid = schema.validate([1, 2, 3, 4])!.isValid;
+      final isInvalid = schema.validate([1, 2, 3, '4'])!.isValid;
 
       expect(isValid, isTrue);
       expect(isInvalid, isFalse);
@@ -43,8 +43,8 @@ main() {
         }
       });
 
-      final isValid = schema.validate([3.4]).isValid;
-      final isInvalid = schema.validate(['test']).isValid;
+      final isValid = schema.validate([3.4])!.isValid;
+      final isInvalid = schema.validate(['test'])!.isValid;
 
       expect(isValid, isTrue);
       expect(isInvalid, isFalse);
@@ -97,7 +97,7 @@ main() {
           "subtree": {"meta": "a string", "nodes": []}
         }
       ]
-    }).isValid;
+    })!.isValid;
 
     final isInvalid = schema.validate({
       "meta": "a string",
@@ -115,7 +115,7 @@ main() {
           }
         }
       ]
-    }).isValid;
+    })!.isValid;
 
     expect(isValid, isTrue);
     expect(isInvalid, isFalse);

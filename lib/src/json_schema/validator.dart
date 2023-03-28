@@ -67,7 +67,7 @@ class ValidationError {
   String message;
 
   @override
-  toString() => '${instancePath.isEmpty ? '# (root)' : instancePath}: $message';
+  toString() => '${instancePath!.isEmpty ? '# (root)' : instancePath}: $message';
 }
 
 /// Initialized with schema, validates instances against it
@@ -77,9 +77,9 @@ class Validator {
   /// A private constructor for recursive validations.
   /// [inEvaluatedItemsContext] and [inEvaluatedPropertiesContext] are used to pass in the parents context state.
   Validator._(this._rootSchema,
-      {List<bool> inEvaluatedItemsContext,
+      {List<bool>? inEvaluatedItemsContext,
       bool inEvaluatedPropertiesContext = false,
-      Map<JsonSchema, JsonSchema> initialDynamicParents}) {
+      Map<JsonSchema, JsonSchema>? initialDynamicParents}) {
     if (inEvaluatedItemsContext != null) {
       _pushEvaluatedItemsContext(inEvaluatedItemsContext.length);
     }
@@ -91,7 +91,7 @@ class Validator {
     }
   }
 
-  bool _validateFormats;
+  late bool _validateFormats;
 
   /// Keep track of the number of evaluated items contexts in a list, treating the list as a stack.
   /// The context is an [List] of [bool], representing the number of successful evaluations for the list in the
@@ -121,8 +121,8 @@ class Validator {
       _evaluatedPropertiesContext.isNotEmpty ? _evaluatedPropertiesContext.last : Set<Instance>();
 
   @Deprecated('4.0, to be removed in 5.0, use validate() instead.')
-  ValidationResults validateWithResults(dynamic instance,
-          {bool reportMultipleErrors = false, bool parseJson = false, bool validateFormats}) =>
+  ValidationResults? validateWithResults(dynamic instance,
+          {bool reportMultipleErrors = false, bool parseJson = false, bool? validateFormats}) =>
       validate(
         instance,
         reportMultipleErrors: reportMultipleErrors,
@@ -131,16 +131,16 @@ class Validator {
       );
 
   /// Validate the [instance] against the `Validator`'s `JsonSchema`
-  ValidationResults validate(
+  ValidationResults? validate(
     dynamic instance, {
     bool reportMultipleErrors = false,
     bool parseJson = false,
-    bool validateFormats,
+    bool? validateFormats,
   }) {
     // Reference: https://json-schema.org/draft/2019-09/release-notes.html#format-vocabulary
     // By default, formats are validated on a best-effort basis from draft4 through draft7.
     // Starting with Draft 2019-09, formats shouldn't be validated by default.
-    _validateFormats = validateFormats ?? _rootSchema.schemaVersion <= SchemaVersion.draft7;
+    _validateFormats = validateFormats ?? _rootSchema!.schemaVersion <= SchemaVersion.draft7;
 
     dynamic data = instance;
     if (parseJson && instance is String) {
@@ -155,7 +155,7 @@ class Validator {
     _errors = [];
     if (!_reportMultipleErrors) {
       try {
-        _validate(_rootSchema, data);
+        _validate(_rootSchema!, data);
         return ValidationResults(_errors, _warnings);
       } on FormatException {
         return ValidationResults(_errors, _warnings);
@@ -165,11 +165,11 @@ class Validator {
       }
     }
 
-    _validate(_rootSchema, data);
+    _validate(_rootSchema!, data);
     return ValidationResults(_errors, _warnings);
   }
 
-  static bool _typeMatch(SchemaType type, JsonSchema schema, dynamic instance) {
+  static bool _typeMatch(SchemaType? type, JsonSchema schema, dynamic instance) {
     if (type == SchemaType.object) {
       return instance is Map;
     } else if (type == SchemaType.string) {
@@ -190,28 +190,28 @@ class Validator {
   }
 
   void _numberValidation(JsonSchema schema, Instance instance) {
-    final num n = instance.data;
+    final num? n = instance.data;
     final maximum = schema.maximum;
     final minimum = schema.minimum;
     final exclusiveMaximum = schema.exclusiveMaximum;
     final exclusiveMinimum = schema.exclusiveMinimum;
 
     if (exclusiveMaximum != null) {
-      if (n >= exclusiveMaximum) {
+      if (n! >= exclusiveMaximum) {
         _err('exclusiveMaximum exceeded ($n >= $exclusiveMaximum)', instance.path, schema.path);
       }
     } else if (maximum != null) {
-      if (n > maximum) {
+      if (n! > maximum) {
         _err('maximum exceeded ($n > $maximum)', instance.path, schema.path);
       }
     }
 
     if (exclusiveMinimum != null) {
-      if (n <= exclusiveMinimum) {
+      if (n! <= exclusiveMinimum) {
         _err('exclusiveMinimum violated ($n <= $exclusiveMinimum)', instance.path, schema.path);
       }
     } else if (minimum != null) {
-      if (n < minimum) {
+      if (n! < minimum) {
         _err('minimum violated ($n < $minimum)', instance.path, schema.path);
       }
     }
@@ -223,7 +223,7 @@ class Validator {
           _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path);
         }
       } else {
-        final double result = n / multipleOf;
+        final double result = n! / multipleOf;
         if (result == double.infinity) {
           _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path);
         } else if (result.truncate() != result) {
@@ -295,9 +295,9 @@ class Validator {
     if (schema.prefixItems != null) {
       var items = schema.prefixItems;
       for (int i = 0; i < end; i++) {
-        assert(items[i] != null);
+        assert(items![i] != null);
         final itemInstance = Instance(instance.data[i], path: '${instance.path}/$i');
-        _validate(items[i], itemInstance);
+        _validate(items![i]!, itemInstance);
         _setItemAsEvaluated(i);
       }
     }
@@ -305,14 +305,14 @@ class Validator {
     if (schema.items != null) {
       for (int i = end; i < actual; i++) {
         final itemInstance = Instance(instance.data[i], path: '${instance.path}/$i');
-        _validate(schema.items, itemInstance);
+        _validate(schema.items!, itemInstance);
         _setItemAsEvaluated(i);
       }
     }
   }
 
   void _itemsValidation(JsonSchema schema, Instance instance) {
-    final int actual = instance.data.length;
+    final int? actual = instance.data.length;
 
     if (schema.schemaVersion >= SchemaVersion.draft2020_12) {
       _itemsValidation2020(schema, instance);
@@ -329,21 +329,21 @@ class Validator {
 
         if (items != null) {
           final expected = items.length;
-          final end = min(expected, actual);
+          final end = min(expected, actual!);
           // All the items have been evaluated somewhere else, or they will be evaluated upto the end count.
           for (int i = 0; i < end; i++) {
             assert(items[i] != null);
             final itemInstance = Instance(instance.data[i], path: '${instance.path}/$i');
-            _validate(items[i], itemInstance);
+            _validate(items[i]!, itemInstance);
             _setItemAsEvaluated(i);
           }
           if (schema.additionalItemsSchema != null) {
             for (int i = end; i < actual; i++) {
               final itemInstance = Instance(instance.data[i], path: '${instance.path}/$i');
-              _validate(schema.additionalItemsSchema, itemInstance);
+              _validate(schema.additionalItemsSchema!, itemInstance);
             }
           } else if (schema.additionalItemsBool != null) {
-            if (!schema.additionalItemsBool && actual > end) {
+            if (!schema.additionalItemsBool! && actual > end) {
               _err('additionalItems false', instance.path, schema.path + '/additionalItems');
             } else {
               // All the items in this list have been evaluated.
@@ -356,9 +356,9 @@ class Validator {
 
     final maxItems = schema.maxItems;
     final minItems = schema.minItems;
-    if (maxItems is int && actual > maxItems) {
+    if (maxItems is int && actual! > maxItems) {
       _err('maxItems exceeded ($actual vs $maxItems)', instance.path, schema.path);
-    } else if (schema.minItems is int && actual < schema.minItems) {
+    } else if (schema.minItems is int && actual! < schema.minItems!) {
       _err('minItems violated ($actual vs $minItems)', instance.path, schema.path);
     }
 
@@ -402,8 +402,8 @@ class Validator {
   _validateUnevaluatedItems(JsonSchema schema, Instance instance) {
     if (schema.unevaluatedItems != null && schema.additionalItemsBool is! bool) {
       final actual = instance.data.length;
-      if (schema.unevaluatedItems.schemaBool != null) {
-        if (schema.unevaluatedItems.schemaBool == false && actual > this._evaluatedItemCount) {
+      if (schema.unevaluatedItems!.schemaBool != null) {
+        if (schema.unevaluatedItems!.schemaBool == false && actual > this._evaluatedItemCount) {
           _err('unevaluatedItems false', instance.path, schema.path + '/unevaluatedItems');
         }
       } else {
@@ -411,7 +411,7 @@ class Validator {
         for (int i = 0; i < evaluatedItemsList.length; i++) {
           if (evaluatedItemsList[i] == false) {
             final itemInstance = Instance(instance.data[i], path: '${instance.path}/$i');
-            _validate(schema.unevaluatedItems, itemInstance);
+            _validate(schema.unevaluatedItems!, itemInstance);
           }
         }
       }
@@ -421,14 +421,14 @@ class Validator {
   }
 
   /// Helper function to capture the number of evaluatedItems and update the local count.
-  bool _validateAndCaptureEvaluations(JsonSchema s, Instance instance) {
+  bool _validateAndCaptureEvaluations(JsonSchema? s, Instance instance) {
     var v = Validator._(
       s,
       inEvaluatedItemsContext: _evaluatedItemsContext.lastOrNull,
       inEvaluatedPropertiesContext: _isInEvaluatedPropertiesContext,
       initialDynamicParents: _dynamicParents,
     );
-    var isValid = v.validate(instance).isValid;
+    var isValid = v.validate(instance)!.isValid;
     if (isValid) {
       if (this._isInEvaluatedItemContext) {
         _mergeEvaluatedItems(v._evaluatedItemsContext.lastOrNull);
@@ -474,8 +474,8 @@ class Validator {
   }
 
   void _validateNot(JsonSchema schema, Instance instance) {
-    if (Validator(schema.notSchema).validate(instance).isValid) {
-      _err('${schema.notSchema.path}: not violated', instance.path, schema.notSchema.path);
+    if (Validator(schema.notSchema).validate(instance)!.isValid) {
+      _err('${schema.notSchema!.path}: not violated', instance.path, schema.notSchema!.path);
     }
   }
 
@@ -486,7 +486,7 @@ class Validator {
     if (instance.data is! String) return;
 
     // ignore: deprecated_member_use_from_same_package
-    final validator = schema.customFormats[schema.format] ?? defaultFormatValidators[schema.format];
+    final validator = schema.customFormats[schema.format!] ?? defaultFormatValidators[schema.format!];
 
     if (validator == null) {
       // Don't attempt to validate unknown formats.
@@ -497,18 +497,18 @@ class Validator {
   }
 
   void _objectPropertyValidation(JsonSchema schema, Instance instance) {
-    final propMustValidate = schema.additionalPropertiesBool != null && !schema.additionalPropertiesBool;
+    final propMustValidate = schema.additionalPropertiesBool != null && !schema.additionalPropertiesBool!;
 
     instance.data.forEach((k, v) {
       // Validate property names against the provided schema, if any.
       if (schema.propertyNamesSchema != null) {
-        _validate(schema.propertyNamesSchema, k);
+        _validate(schema.propertyNamesSchema!, k);
       }
 
       final newInstance = Instance(v, path: '${instance.path}/$k');
 
       bool propCovered = false;
-      final JsonSchema propSchema = schema.properties[k];
+      final JsonSchema? propSchema = schema.properties[k];
       if (propSchema != null) {
         assert(propSchema != null);
         _validate(propSchema, newInstance);
@@ -518,14 +518,14 @@ class Validator {
       schema.patternProperties.forEach((regex, patternSchema) {
         if (regex.hasMatch(k)) {
           assert(patternSchema != null);
-          _validate(patternSchema, newInstance);
+          _validate(patternSchema!, newInstance);
           propCovered = true;
         }
       });
 
       if (!propCovered) {
         if (schema.additionalPropertiesSchema != null) {
-          _validate(schema.additionalPropertiesSchema, newInstance);
+          _validate(schema.additionalPropertiesSchema!, newInstance);
         } else if (propMustValidate) {
           _err('unallowed additional property $k', instance.path, schema.path + '/additionalProperties');
         } else if (schema.additionalPropertiesBool == true) {
@@ -553,7 +553,7 @@ class Validator {
     schema.schemaDependencies.forEach((k, otherSchema) {
       if (instance.data.containsKey(k)) {
         if (!_validateAndCaptureEvaluations(otherSchema, instance)) {
-          _err('prop $k violated schema dependency', instance.path, otherSchema.path);
+          _err('prop $k violated schema dependency', instance.path, otherSchema!.path);
         } else {
           _addEvaluatedProp(instance);
         }
@@ -574,7 +574,7 @@ class Validator {
 
     // Required Properties
     if (schema.requiredProperties != null) {
-      schema.requiredProperties.forEach((prop) {
+      schema.requiredProperties!.forEach((prop) {
         if (!instance.data.containsKey(prop)) {
           // One error for the root object that contains the missing property.
           _err('required prop missing: ${prop} from $instance', instance.path, schema.path + '/required');
@@ -591,7 +591,7 @@ class Validator {
     if (schema.schemaDependencies != null) _schemaDependenciesValidation(schema, instance);
 
     if (schema.unevaluatedProperties != null) {
-      if (schema.unevaluatedProperties.schemaBool == true) {
+      if (schema.unevaluatedProperties!.schemaBool == true) {
         instance.data.forEach((k, v) {
           var i = Instance(v, path: '${instance.path}/$k');
           _addEvaluatedProp(i);
@@ -600,7 +600,7 @@ class Validator {
         instance.data.forEach((k, v) {
           var i = Instance(v, path: '${instance.path}/$k');
           if (!this._evaluatedProperties.contains(i)) {
-            _validate(schema.unevaluatedProperties, i);
+            _validate(schema.unevaluatedProperties!, i);
           }
         });
       }
@@ -609,38 +609,38 @@ class Validator {
 
   /// Find the furthest away parent [JsonSchema] the that is a recursive anchor
   /// or null of there is no recursiveAnchor found.
-  JsonSchema _findAnchorParent(JsonSchema schema) {
-    JsonSchema lastFound = schema.recursiveAnchor ? schema : null;
+  JsonSchema? _findAnchorParent(JsonSchema schema) {
+    JsonSchema? lastFound = schema.recursiveAnchor ? schema : null;
     var possibleAnchor = _dynamicParents[schema] ?? schema.parent;
     while (possibleAnchor != null) {
       if (possibleAnchor.recursiveAnchor) {
         lastFound = possibleAnchor;
       }
-      possibleAnchor = _dynamicParents[possibleAnchor] ?? possibleAnchor.parent;
+      possibleAnchor = _dynamicParents[possibleAnchor] ?? possibleAnchor.parent!;
     }
     return lastFound;
   }
 
   // Traverse up the dynamic path, starting at schema, for the furthest most dynamicAnchor.
-  JsonSchema _findDynamicAnchorParent(JsonSchema schema, String anchorName) {
+  JsonSchema? _findDynamicAnchorParent(JsonSchema schema, String? anchorName) {
     if (anchorName == null) {
       return null;
     }
-    JsonSchema lastFound;
-    var parent = schema;
+    JsonSchema? lastFound;
+    JsonSchema? parent = schema;
     while (parent != null) {
       var nextCandidate = parent.resolveDynamicAnchor(anchorName);
       if (nextCandidate != null) {
         lastFound = nextCandidate;
       }
-      parent = _dynamicParents[parent] ?? parent.parent;
+      parent = _dynamicParents[parent] ?? parent.parent!;
     }
     return lastFound;
   }
 
   /// A helper function to deal with infinite loops at evaluation time.
   /// If we see the same data/ref pair twice, we're in a loop.
-  void _withRefScope(Uri refScope, Instance instance, Function() fn) {
+  void _withRefScope(Uri? refScope, Instance instance, Function() fn) {
     var irp = InstanceRefPair(instance.path, refScope);
     if (!_refsEncountered.add(irp)) {
       // Throw if cycle is detected while evaluating refs.
@@ -667,7 +667,7 @@ class Validator {
     /// from the [refMap] instead.
     if (schema.ref != null) {
       _withRefScope(schema.ref, instance, () {
-        var nextSchema = schema.resolvePath(schema.ref);
+        var nextSchema = schema.resolvePath(schema.ref)!;
         final prevParent = _setDynamicParent(nextSchema, schema);
         _validate(nextSchema, instance);
         _setDynamicParent(nextSchema, prevParent);
@@ -682,7 +682,7 @@ class Validator {
     /// from the [refMap] instead.
     if (schema.recursiveRef != null) {
       _withRefScope(schema.recursiveRef, instance, () {
-        var nextSchema = schema.resolvePath(schema.recursiveRef);
+        var nextSchema = schema.resolvePath(schema.recursiveRef)!;
         if (nextSchema.recursiveAnchor == true) {
           nextSchema = _findAnchorParent(nextSchema) ?? nextSchema;
           _validate(nextSchema, instance);
@@ -699,7 +699,7 @@ class Validator {
 
     if (schema.dynamicRef != null) {
       _withRefScope(schema.recursiveRef, instance, () {
-        var nextSchema = schema.resolvePath(schema.dynamicRef);
+        var nextSchema = schema.resolvePath(schema.dynamicRef)!;
         var anchorParent = _findDynamicAnchorParent(schema, nextSchema.dynamicAnchor);
         if (anchorParent != null) {
           _validate(anchorParent, instance);
@@ -797,7 +797,7 @@ class Validator {
     }
   }
 
-  _mergeEvaluatedItems(List<bool> evaluatedItems) {
+  _mergeEvaluatedItems(List<bool>? evaluatedItems) {
     if (_isInEvaluatedItemContext) {
       evaluatedItems?.forEachIndexed((index, element) {
         if (element) {
@@ -807,7 +807,7 @@ class Validator {
     }
   }
 
-  int get _evaluatedItemCount => _evaluatedItemsContext.lastOrNull?.where((element) => element)?.length;
+  int? get _evaluatedItemCount => _evaluatedItemsContext.lastOrNull?.where((element) => element)?.length;
 
   //////
   // Helper functions to deal with unevaluatedProperties.
@@ -833,7 +833,7 @@ class Validator {
     }
   }
 
-  JsonSchema _setDynamicParent(JsonSchema child, JsonSchema dynamicParent) {
+  JsonSchema? _setDynamicParent(JsonSchema child, JsonSchema? dynamicParent) {
     final oldParent = _dynamicParents.remove(child);
     if (dynamicParent != null) {
       _dynamicParents[child] = dynamicParent;
@@ -854,8 +854,8 @@ class Validator {
     _warnings.add(ValidationError._(instancePath, schemaPath, msg));
   }
 
-  JsonSchema _rootSchema;
+  JsonSchema? _rootSchema;
   List<ValidationError> _errors = [];
   List<ValidationError> _warnings = [];
-  bool _reportMultipleErrors;
+  late bool _reportMultipleErrors;
 }

@@ -43,10 +43,10 @@ import 'package:json_schema/src/json_schema/utils/utils.dart';
 class SchemaPathPair {
   SchemaPathPair(this.schema, this.path);
 
-  int _hashCode;
+  int? _hashCode;
 
   final JsonSchema schema;
-  final Uri path;
+  final Uri? path;
 
   @override
   toString() => path.toString();

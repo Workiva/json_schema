@@ -17,10 +17,10 @@ main() {
 
     final badlyFormatted = {'someKey': '@@@@@'};
 
-    expect(schemaDraft7.validate(badlyFormatted).isValid, isFalse);
-    expect(schemaDraft7.validate(badlyFormatted, validateFormats: false).isValid, isTrue);
+    expect(schemaDraft7.validate(badlyFormatted)!.isValid, isFalse);
+    expect(schemaDraft7.validate(badlyFormatted, validateFormats: false)!.isValid, isTrue);
 
-    expect(schemaDraft2019.validate(badlyFormatted).isValid, isTrue);
-    expect(schemaDraft2019.validate(badlyFormatted, validateFormats: true).isValid, isFalse);
+    expect(schemaDraft2019.validate(badlyFormatted)!.isValid, isTrue);
+    expect(schemaDraft2019.validate(badlyFormatted, validateFormats: true)!.isValid, isFalse);
   });
 }

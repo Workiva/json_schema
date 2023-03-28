@@ -20,7 +20,7 @@ import 'uri_template_validator.dart';
 import 'uri_validator.dart';
 import 'uuid_validator.dart';
 
-Map<String, ValidationContext Function(ValidationContext context, String instanceData)> defaultFormatValidators = {
+Map<String, ValidationContext Function(ValidationContext context, String? instanceData)> defaultFormatValidators = {
   'date': defaultDateValidator,
   'date-time': defaultDateTimeValidator,
   'duration': defaultDurationValidator,

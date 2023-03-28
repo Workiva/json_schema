@@ -44,7 +44,7 @@ bool originAllowAll(String origin) => true;
 
 OriginChecker originOneOf(List<String> origins) => (origin) => origins.contains(origin);
 Middleware corsHeaders({
-  Map<String, String> headers,
+  Map<String, String>? headers,
   OriginChecker originChecker = originAllowAll,
 }) {
   final headersAll = headers?.map((key, value) => MapEntry(key, [value]));

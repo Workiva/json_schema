@@ -43,18 +43,18 @@ import 'package:json_schema/src/json_schema/models/validation_context.dart';
 ///
 /// The two functions provided are used to process an attribute in a schema and then validate data.
 ///
-/// The setter function takes the current JsonSchema node being processed and the data from the json.
+/// The [propertySetter] function takes the current JsonSchema node being processed and the data from the json.
 /// The given function should validate and transform the data however is needed for the corresponding validation
 /// function. If the data is bad a [FormatException] with a clear message should be thrown.
 ///
-/// The validation function takes the output from the property setter and data from a JSON payload to be validated.
+/// The [validator] function takes the output from the [propertySetter] and data from a JSON payload to be validated.
 /// A [CustomValidationResult] should be returned to indicate the outcome of the validation.
 class CustomKeyword {
   CustomKeyword(this.propertySetter, this.validator);
 
   /// Function used to set a property from the a schema.
-  final Object Function(JsonSchema schema, Object value) propertySetter;
+  final Object Function(JsonSchema? schema, Object? value) propertySetter;
 
   /// Function used to validate a json value.
-  final ValidationContext Function(ValidationContext context, Object schemaProperty, Object instanceData) validator;
+  final ValidationContext Function(ValidationContext context, Object schemaProperty, Object? instanceData) validator;
 }

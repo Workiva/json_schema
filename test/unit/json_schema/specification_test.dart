@@ -62,9 +62,9 @@ void main() {
   final allDraft2020 =
       specificationTests.entries.where((MapEntry<String, String> entry) => entry.key.startsWith('/draft2020-12'));
 
-  final runAllTestsForDraftX = (SchemaVersion schemaVersion, Iterable<MapEntry<String, String>> allTests,
+  final Null Function(SchemaVersion, Iterable<MapEntry<String, String>>, List<String>, List<String>, {bool isSync, RefProvider<dynamic> refProvider, bool validateFormats}) runAllTestsForDraftX = (SchemaVersion schemaVersion, Iterable<MapEntry<String, String>> allTests,
       List<String> skipFiles, List<String> skipTests,
-      {bool isSync = false, bool validateFormats, RefProvider refProvider}) {
+      {bool isSync = false, bool? validateFormats, RefProvider? refProvider}) {
     String shortSchemaVersion = schemaVersion.toString();
     if (schemaVersion == SchemaVersion.draft4) {
       shortSchemaVersion = 'draft4';
@@ -80,7 +80,7 @@ void main() {
 
     allTests.forEach((testEntry) {
       if (testEntry is MapEntry) {
-        final checkResult = (List<ValidationError> validationResults, bool expectedResult) {
+        final checkResult = (List<ValidationError> validationResults, bool? expectedResult) {
           if (validationResults.isEmpty != expectedResult && expectedResult == true) {
             validationResults.forEach((error) {
               print(error);
@@ -100,7 +100,7 @@ void main() {
             final List validationTests = testEntry['tests'];
 
             validationTests.forEach((validationTest) {
-              final String validationDescription = validationTest['description'];
+              final String? validationDescription = validationTest['description'];
               final String testName = '${description} : ${validationDescription}';
 
               // Individual test cases to skip - reason listed in comments.
@@ -108,8 +108,8 @@ void main() {
 
               test(testName, () {
                 final instance = validationTest['data'];
-                ValidationResults validationResults;
-                final bool expectedResult = validationTest['valid'];
+                ValidationResults? validationResults;
+                final bool? expectedResult = validationTest['valid'];
 
                 if (isSync) {
                   final schema = JsonSchema.create(
@@ -118,13 +118,13 @@ void main() {
                     refProvider: refProvider,
                   );
                   validationResults = schema.validate(instance, validateFormats: validateFormats);
-                  expect(validationResults.isValid, expectedResult);
+                  expect(validationResults!.isValid, expectedResult);
                 } else {
                   final checkResultAsync = expectAsync2(checkResult);
                   JsonSchema.createAsync(schemaData, schemaVersion: schemaVersion, refProvider: refProvider)
                       .then((schema) {
                     validationResults = schema.validate(instance, validateFormats: validateFormats);
-                    checkResultAsync(validationResults.errors, expectedResult);
+                    checkResultAsync(validationResults!.errors, expectedResult);
                   });
                 }
               });
@@ -137,7 +137,7 @@ void main() {
 
   // Mock Ref Provider for refRemote tests. Emulates what createFromUrl would return.
   final RefProvider syncRefProvider = RefProvider.sync((String ref) {
-    return json.decode(specificationRemotes[ref]);
+    return json.decode(specificationRemotes[ref]!);
   });
 
   final RefProvider asyncRefProvider = RefProvider.async((String ref) async {

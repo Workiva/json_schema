@@ -80,10 +80,10 @@ class SchemaType implements Comparable<SchemaType> {
       string: 'string'
     };
 
-    return typeToStringMap[this];
+    return typeToStringMap[this]!;
   }
 
-  static SchemaType fromString(String s) {
+  static SchemaType? fromString(String s) {
     if (s == null) return null;
     switch (s) {
       case 'array':

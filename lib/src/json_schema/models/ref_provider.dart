@@ -40,8 +40,8 @@ import 'package:json_schema/src/json_schema/schema_url_client/stub_schema_url_cl
     if (dart.library.html) 'package:json_schema/src/json_schema/schema_url_client/html_schema_url_client.dart'
     if (dart.library.io) 'package:json_schema/src/json_schema/schema_url_client/io_schema_url_client.dart';
 
-typedef SyncJsonProvider = Map<String, dynamic> Function(String ref);
-typedef AsyncJsonProvider = Future<Map<String, dynamic>> Function(String ref);
+typedef SyncJsonProvider = Map<String, dynamic>? Function(String ref);
+typedef AsyncJsonProvider = Future<Map<String, dynamic>?> Function(String ref);
 
 class RefProvider<T> {
   RefProvider(this.provide, this.isSync);
@@ -64,6 +64,6 @@ class RefProvider<T> {
   final T provide;
 }
 
-final defaultUrlRefProvider = RefProvider.async((String ref) async {
-  return await createClient()?.getSchemaJsonFromUrl(ref);
+final defaultUrlRefProvider = RefProvider.async((String? ref) async {
+  return await createClient()?.getSchemaJsonFromUrl(ref ?? '');
 });

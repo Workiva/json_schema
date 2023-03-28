@@ -39,8 +39,8 @@
 import 'package:json_schema/json_schema.dart';
 import 'package:test/test.dart';
 
-ValidationContext screamingCapsValidator(ValidationContext context, String instanceData) {
-  if (instanceData.toUpperCase() != instanceData) {
+ValidationContext screamingCapsValidator(ValidationContext context, String? instanceData) {
+  if (instanceData!.toUpperCase() != instanceData) {
     context.addError('"screaming-caps" format not accepted $instanceData');
   }
   return context;
@@ -64,8 +64,8 @@ main() {
       // ignore: deprecated_member_use_from_same_package
       expect(schema.customFormats.keys.contains('screaming-caps'), isTrue);
 
-      expect(schema.validate({'baz': 'DO IT NOW'}, validateFormats: true).isValid, isTrue);
-      expect(schema.validate({'baz': 'do it'}, validateFormats: true).isValid, isFalse);
+      expect(schema.validate({'baz': 'DO IT NOW'}, validateFormats: true)!.isValid, isTrue);
+      expect(schema.validate({'baz': 'do it'}, validateFormats: true)!.isValid, isFalse);
     });
   });
 }

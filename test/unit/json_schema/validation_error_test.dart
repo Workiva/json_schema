@@ -14,7 +14,7 @@ void main() {
   group('ValidationError', () {
     test('boolean false at root', () {
       final schema = JsonSchema.create(false);
-      final errors = schema.validate({'someKey': 1}).errors;
+      final errors = schema.validate({'someKey': 1})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '');
@@ -26,7 +26,7 @@ void main() {
       final schema = JsonSchema.create({
         'properties': {'someKey': false}
       });
-      final errors = schema.validate({'someKey': 1}).errors;
+      final errors = schema.validate({'someKey': 1})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -36,7 +36,7 @@ void main() {
 
     test('type', () {
       final schema = createObjectSchema({"type": "string"});
-      final errors = schema.validate({'someKey': 1}).errors;
+      final errors = schema.validate({'someKey': 1})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -46,7 +46,7 @@ void main() {
 
     test('const', () {
       final schema = createObjectSchema({'const': 'foo'});
-      final errors = schema.validate({'someKey': 'bar'}).errors;
+      final errors = schema.validate({'someKey': 'bar'})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -58,7 +58,7 @@ void main() {
       final schema = createObjectSchema({
         'enum': [1, 2, 3]
       });
-      final errors = schema.validate({'someKey': 4}).errors;
+      final errors = schema.validate({'someKey': 4})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -70,7 +70,7 @@ void main() {
       final schema = createObjectSchema({'minLength': 3, 'maxLength': 5, 'pattern': '^a.*\$'});
 
       test('minLength', () {
-        final errors = schema.validate({'someKey': 'ab'}).errors;
+        final errors = schema.validate({'someKey': 'ab'})!.errors;
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/someKey');
@@ -79,7 +79,7 @@ void main() {
       });
 
       test('maxLength', () {
-        final errors = schema.validate({'someKey': 'abcdef'}).errors;
+        final errors = schema.validate({'someKey': 'abcdef'})!.errors;
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/someKey');
@@ -88,7 +88,7 @@ void main() {
       });
 
       test('pattern', () {
-        final errors = schema.validate({'someKey': 'bye'}).errors;
+        final errors = schema.validate({'someKey': 'bye'})!.errors;
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/someKey');
@@ -112,7 +112,7 @@ void main() {
       test('maximum', () {
         final errors = schema.validate({
           'someKey': {'nonexclusive': 5.1}
-        }).errors;
+        })!.errors;
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/someKey/nonexclusive');
@@ -123,7 +123,7 @@ void main() {
       test('minimum', () {
         final errors = schema.validate({
           'someKey': {'nonexclusive': 2.9}
-        }).errors;
+        })!.errors;
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/someKey/nonexclusive');
@@ -134,7 +134,7 @@ void main() {
       test('exclusiveMaximum', () {
         final errors = schema.validate({
           'someKey': {'exclusive': 5.0}
-        }).errors;
+        })!.errors;
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/someKey/exclusive');
@@ -145,7 +145,7 @@ void main() {
       test('exclusiveMinimum', () {
         final errors = schema.validate({
           'someKey': {'exclusive': 3.0}
-        }).errors;
+        })!.errors;
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/someKey/exclusive');
@@ -156,7 +156,7 @@ void main() {
       test('multipleOf', () {
         final errors = schema.validate({
           'someKey': {'multiple': 7}
-        }).errors;
+        })!.errors;
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/someKey/multiple');
@@ -171,7 +171,7 @@ void main() {
       });
       final errors = schema.validate({
         'someKey': [1, 2, 'foo']
-      }).errors;
+      })!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey/2');
@@ -188,7 +188,7 @@ void main() {
       });
       final errors = schema.validate({
         'someKey': ['foo', 'bar']
-      }).errors;
+      })!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey/0');
@@ -206,7 +206,7 @@ void main() {
       });
       final errors = schema.validate({
         'someKey': ['foo', 'bar', 'baz']
-      }).errors;
+      })!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey/2');
@@ -224,7 +224,7 @@ void main() {
       });
       final errors = schema.validate({
         'someKey': ['foo', 'bar', 'baz']
-      }).errors;
+      })!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -240,7 +240,7 @@ void main() {
         ]
       });
 
-      final errors = schema.validate({'someKey': 'a long string'}).errors;
+      final errors = schema.validate({'someKey': 'a long string'})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -272,7 +272,7 @@ void main() {
 
       final errors = schema.validate({
         'someKey': {'foo': 'string', 'bar': 1}
-      }).errors;
+      })!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -288,7 +288,7 @@ void main() {
         ]
       });
 
-      final errors = schema.validate({'someKey': 1.5}).errors;
+      final errors = schema.validate({'someKey': 1.5})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -304,7 +304,7 @@ void main() {
         ]
       });
 
-      final errors = schema.validate({'someKey': 3}).errors;
+      final errors = schema.validate({'someKey': 3})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -317,7 +317,7 @@ void main() {
         "not": {"type": "integer"}
       });
 
-      final errors = schema.validate({'someKey': 3}).errors;
+      final errors = schema.validate({'someKey': 3})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -328,7 +328,7 @@ void main() {
     test('date-time format', () {
       final schema = createObjectSchema({'format': 'date-time'});
 
-      final errors = schema.validate({'someKey': 'foo'}).errors;
+      final errors = schema.validate({'someKey': 'foo'})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -339,7 +339,7 @@ void main() {
     test('URI format', () {
       final schema = createObjectSchema({'format': 'uri'});
 
-      final errors = schema.validate({'someKey': 'foo'}).errors;
+      final errors = schema.validate({'someKey': 'foo'})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -350,7 +350,7 @@ void main() {
     test('URI reference format', () {
       final schema = createObjectSchema({'format': 'uri-reference'});
 
-      final errors = schema.validate({'someKey': '\\\\WINDOWS\\fileshare'}).errors;
+      final errors = schema.validate({'someKey': '\\\\WINDOWS\\fileshare'})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -361,7 +361,7 @@ void main() {
     test('URI template format', () {
       final schema = createObjectSchema({'format': 'uri-template'});
 
-      final errors = schema.validate({'someKey': 'http://example.com/dictionary/{term:1}/{term'}).errors;
+      final errors = schema.validate({'someKey': 'http://example.com/dictionary/{term:1}/{term'})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -372,7 +372,7 @@ void main() {
     test('Email address format', () {
       final schema = createObjectSchema({'format': 'email'});
 
-      final errors = schema.validate({'someKey': 'foo'}).errors;
+      final errors = schema.validate({'someKey': 'foo'})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -383,7 +383,7 @@ void main() {
     test('IPv4 format', () {
       final schema = createObjectSchema({'format': 'ipv4'});
 
-      final errors = schema.validate({'someKey': 'foo'}).errors;
+      final errors = schema.validate({'someKey': 'foo'})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -394,7 +394,7 @@ void main() {
     test('IPv6 format', () {
       final schema = createObjectSchema({'format': 'ipv6'});
 
-      final errors = schema.validate({'someKey': '::foo'}).errors;
+      final errors = schema.validate({'someKey': '::foo'})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -405,7 +405,7 @@ void main() {
     test('Hostname format', () {
       final schema = createObjectSchema({'format': 'hostname'});
 
-      final errors = schema.validate({'someKey': 'not_valid'}).errors;
+      final errors = schema.validate({'someKey': 'not_valid'})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -416,7 +416,7 @@ void main() {
     test('JSON Pointer format', () {
       final schema = createObjectSchema({'format': 'json-pointer'});
 
-      final errors = schema.validate({'someKey': 'foo'}).errors;
+      final errors = schema.validate({'someKey': 'foo'})!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -427,7 +427,7 @@ void main() {
     test('Unknown format', () {
       final schema = createObjectSchema({'format': 'fake-format'});
 
-      final isValid = schema.validate({'someKey': '3'}).isValid;
+      final isValid = schema.validate({'someKey': '3'})!.isValid;
 
       expect(isValid, isTrue);
     });
@@ -436,7 +436,7 @@ void main() {
       final schema = createObjectSchema({'minProperties': 2});
       final errors = schema.validate({
         'someKey': {'foo': 'bar'}
-      }).errors;
+      })!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -448,7 +448,7 @@ void main() {
       final schema = createObjectSchema({'maxProperties': 1});
       final errors = schema.validate({
         'someKey': {'foo': 1, 'bar': 2}
-      }).errors;
+      })!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -466,7 +466,7 @@ void main() {
       });
       final errors = schema.validate({
         'someKey': {'foo': 'a'}
-      }).errors;
+      })!.errors;
 
       // Error for the root object instance path.
       expect(errors.length, 2);
@@ -487,7 +487,7 @@ void main() {
       });
       final errors = schema.validate({
         'someKey': {'foooooooo': 'a'}
-      }).errors;
+      })!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey/foooooooo');
@@ -505,7 +505,7 @@ void main() {
       });
       final errors = schema.validate({
         'someKey': {'foo': 'a', 'bar': 'b', 'baz': 'c'}
-      }).errors;
+      })!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -523,7 +523,7 @@ void main() {
       });
       final errors = schema.validate({
         'someKey': {'foo': 'a', 'bar': 'b', 'baz': 3}
-      }).errors;
+      })!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey/baz');
@@ -539,7 +539,7 @@ void main() {
       });
       final errors = schema.validate({
         'someKey': {'bar': 'b'}
-      }).errors;
+      })!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -560,7 +560,7 @@ void main() {
       });
       final errors = schema.validate({
         'someKey': {"foo": 2, "bar": "quux"}
-      }).errors;
+      })!.errors;
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -578,13 +578,13 @@ void main() {
       });
 
       test('with an instance path should include the path', () {
-        final errors = schema.validate({'foo': 'some string', 'bar': 'oops this should be an integer'}).errors;
+        final errors = schema.validate({'foo': 'some string', 'bar': 'oops this should be an integer'})!.errors;
         expect(errors.length, 1);
         expect(errors[0].toString().startsWith('/bar:'), isTrue);
       });
 
       test('without an instance path should add "root" instead of the path', () {
-        final errors = schema.validate({}).errors;
+        final errors = schema.validate({})!.errors;
         expect(errors.length, 2);
         expect(errors[0].toString(), '# (root): required prop missing: foo from {}');
       });
@@ -616,7 +616,7 @@ void main() {
       final schema = JsonSchema.create(schemaJson, refProvider: syncRefProvider);
 
       test('local', () {
-        final errors = schema.validate({'minLength': 'foo'}).errors;
+        final errors = schema.validate({'minLength': 'foo'})!.errors;
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/minLength');
@@ -625,7 +625,7 @@ void main() {
       });
 
       test('remote', () {
-        final errors = schema.validate({'maxLength': 'foo'}).errors;
+        final errors = schema.validate({'maxLength': 'foo'})!.errors;
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/maxLength');

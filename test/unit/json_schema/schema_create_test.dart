@@ -13,7 +13,7 @@ void main() {
           'multiple': {'multipleOf': 2}
         }
       });
-      final results = schema.validate({'multiple': 2});
+      final results = schema.validate({'multiple': 2})!;
       expect(results.errors.length, 0);
     });
 
@@ -23,7 +23,7 @@ void main() {
           'multiple': {'multipleOf': 2}
         }
       }));
-      final results = schema.validate({'multiple': 2});
+      final results = schema.validate({'multiple': 2})!;
       expect(results.errors.length, 0);
     });
 
@@ -41,7 +41,7 @@ void main() {
       final results = schema.validate({
         'multiple': 2,
         'someKey': {'multiple': 2},
-      });
+      })!;
       expect(results.errors.length, 0);
     });
 
@@ -51,7 +51,7 @@ void main() {
           'multiple': {'multipleOf': 2}
         }
       }));
-      final results = schema.validate({'multiple': 2});
+      final results = schema.validate({'multiple': 2})!;
       expect(results.errors.length, 0);
     });
 
@@ -61,7 +61,7 @@ void main() {
           'multiple': {'multipleOf': 2}
         }
       }));
-      final results = schema.validate({'multiple': 2});
+      final results = schema.validate({'multiple': 2})!;
       expect(results.errors.length, 0);
     });
   });

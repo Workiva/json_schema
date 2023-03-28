@@ -42,10 +42,10 @@ import 'package:json_schema/src/json_schema/utils/utils.dart';
 class InstanceRefPair {
   InstanceRefPair(this.path, this.ref);
 
-  int _hashCode;
+  int? _hashCode;
 
   final String path;
-  final Uri ref;
+  final Uri? ref;
 
   @override
   toString() => "${ref.toString()}: $path";

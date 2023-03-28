@@ -3,6 +3,7 @@
 // (one up from here). The `gen-fixtures` command in the Makefile will do the right thing.
 
 import 'dart:io';
+import 'package:collection/collection.dart' show IterableExtension;
 
 final String remotesDirectory = 'test/JSON-Schema-Test-Suite/remotes';
 final String remotesOutputFile = 'test/unit/specification_remotes.dart';
@@ -52,7 +53,7 @@ String _generateRemoteEntries(Map<String, String> schemaFiles,
   final List<String> entries = [];
   bool isFirst = true;
   schemaFiles.forEach((String path, String fileContents) {
-    if (skipFiles.firstWhere((fileName) => path.endsWith(fileName), orElse: () => null)?.isNotEmpty == true) {
+    if (skipFiles.firstWhereOrNull((fileName) => path.endsWith(fileName))?.isNotEmpty == true) {
       return;
     }
     entries.add(
@@ -75,8 +76,9 @@ List<File> _jsonFiles(String rootDir) {
   return files..sort((f1, f2) => f1.path.compareTo(f2.path));
 }
 
-void main([List<String> args]) {
-  final argsMutableCopy = List.from(args);
+void main([List<String>? args]) {
+  final originalArgs = List.unmodifiable(args ?? []);
+  final argsMutableCopy = List.from(args ?? []);
   bool shouldCheck = argsMutableCopy.contains('--check');
   argsMutableCopy.removeWhere((arg) => arg == '--check');
 
@@ -110,7 +112,7 @@ void main([List<String> args]) {
     }
   }
 
-  if (argsMutableCopy.isEmpty || args[0] == 'tests') {
+  if (argsMutableCopy.isEmpty || originalArgs[0] == 'tests') {
     final bool didChange = generateFileMapFromDirectory(
       [testsDirectory, customTestsDirectory],
       testsOutputFile,

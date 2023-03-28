@@ -65,10 +65,10 @@ main() {
       );
 
       // ignore: deprecated_member_use_from_same_package
-      expect(schema.properties['publishedOn'].customAttributeValidators.keys.contains('minDate'), isTrue);
+      expect(schema.properties['publishedOn']!.customAttributeValidators.keys.contains('minDate'), isTrue);
 
-      expect(schema.validate({'baz': 'foo', 'publishedOn': '2970-01-01'}).isValid, isTrue);
-      expect(schema.validate({'baz': 'foo', 'publishedOn': '1970-01-01'}).isValid, isFalse);
+      expect(schema.validate({'baz': 'foo', 'publishedOn': '2970-01-01'})!.isValid, isTrue);
+      expect(schema.validate({'baz': 'foo', 'publishedOn': '1970-01-01'})!.isValid, isFalse);
     });
 
     test('throws an exception with a bad schema', () async {
@@ -104,7 +104,7 @@ main() {
   });
 }
 
-Object _minDateSetter(JsonSchema s, Object value) {
+Object _minDateSetter(JsonSchema? s, Object? value) {
   var valueStr = TypeValidators.nonEmptyString("minDate", value);
   try {
     return DateTime.parse(valueStr);
@@ -113,15 +113,15 @@ Object _minDateSetter(JsonSchema s, Object value) {
   }
 }
 
-ValidationContext _validateMinDate(ValidationContext context, Object schema, Object instance) {
+ValidationContext _validateMinDate(ValidationContext context, Object schema, Object? instance) {
   if (schema is! DateTime) {
     context.addError('schema is not a date time object.');
   }
-  DateTime minDate = schema;
+  DateTime minDate = schema as DateTime;
   if (instance is! String) {
     context.addError('Data is not stringy');
   }
-  String instanceString = instance;
+  String instanceString = instance as String;
   try {
     var testDate = DateTime.parse(instanceString);
     if (minDate.isAfter(testDate)) {

@@ -42,9 +42,9 @@ import 'package:uri/uri.dart' show UriTemplate;
 import 'package:json_schema/src/json_schema/json_schema.dart';
 
 class JsonSchemaUtils {
-  static JsonSchema getSubMapFromFragment(JsonSchema schema, Uri uri) {
+  static JsonSchema? getSubMapFromFragment(JsonSchema? schema, Uri uri) {
     if (uri.fragment?.isNotEmpty == true) {
-      schema = schema.resolvePath(Uri.parse('#${uri.fragment}'));
+      schema = schema!.resolvePath(Uri.parse('#${uri.fragment}'));
     }
     return schema;
   }

@@ -78,10 +78,10 @@ class SchemaVersion implements Comparable<SchemaVersion> {
       draft2019_09: 'https://json-schema.org/draft/2019-09/schema',
       draft2020_12: 'https://json-schema.org/draft/2020-12/schema',
     };
-    return draftToStringMap[this];
+    return draftToStringMap[this]!;
   }
 
-  static SchemaVersion fromString(String s) {
+  static SchemaVersion? fromString(String? s) {
     if (s == null) return null;
     switch (s) {
       case 'http://json-schema.org/draft-04/schema#':

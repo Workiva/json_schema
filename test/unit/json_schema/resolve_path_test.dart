@@ -2,7 +2,7 @@ import 'package:json_schema/json_schema.dart';
 import 'package:test/test.dart';
 
 main() {
-  JsonSchema testSchema;
+  late JsonSchema testSchema;
   setUp(() {
     testSchema = JsonSchema.create({
       '\$id': 'root',
@@ -29,23 +29,23 @@ main() {
   });
   group('Resolve path', () {
     test('ref resolved immediately when it is the only property.', () {
-      var ref = testSchema.resolvePath(Uri.parse('#/properties/foo'));
+      var ref = testSchema.resolvePath(Uri.parse('#/properties/foo'))!;
       expect(ref.anchor, 'a_anchor');
     });
 
     test('ref should not resolve when there are multiple properties', () {
-      var ref = testSchema.resolvePath(Uri.parse('#/properties/baz'));
+      var ref = testSchema.resolvePath(Uri.parse('#/properties/baz'))!;
       expect(ref.constValue, null);
       expect(ref.ref == null, false);
     });
 
     test('should continue resolving in the current node even if there is a ref', () {
-      final ref = testSchema.resolvePath(Uri.parse('#/properties/baz/properties/findMe'));
+      final ref = testSchema.resolvePath(Uri.parse('#/properties/baz/properties/findMe'))!;
       expect(ref.constValue, 'is found');
     });
 
     test('should follow the ref and continue resolving', () {
-      final ref = testSchema.resolvePath(Uri.parse('#/properties/baz/properties/deeper'));
+      final ref = testSchema.resolvePath(Uri.parse('#/properties/baz/properties/deeper'))!;
       expect(ref.constValue, 'deeper in the schema');
     });
 
