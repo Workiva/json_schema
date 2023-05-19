@@ -67,7 +67,7 @@ class ValidationError {
   String message;
 
   @override
-  toString() => '${instancePath!.isEmpty ? '# (root)' : instancePath}: $message';
+  toString() => '${instancePath.isEmpty ? '# (root)' : instancePath}: $message';
 }
 
 /// Initialized with schema, validates instances against it
@@ -428,7 +428,7 @@ class Validator {
       inEvaluatedPropertiesContext: _isInEvaluatedPropertiesContext,
       initialDynamicParents: _dynamicParents,
     );
-    var isValid = v.validate(instance)!.isValid;
+    var isValid = v.validate(instance)?.isValid ?? false;
     if (isValid) {
       if (this._isInEvaluatedItemContext) {
         _mergeEvaluatedItems(v._evaluatedItemsContext.lastOrNull);
@@ -633,7 +633,7 @@ class Validator {
       if (nextCandidate != null) {
         lastFound = nextCandidate;
       }
-      parent = _dynamicParents[parent] ?? parent.parent!;
+      parent = _dynamicParents[parent] ?? parent.parent;
     }
     return lastFound;
   }

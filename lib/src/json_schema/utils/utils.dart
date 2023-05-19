@@ -43,7 +43,7 @@ import 'package:json_schema/src/json_schema/json_schema.dart';
 
 class JsonSchemaUtils {
   static JsonSchema? getSubMapFromFragment(JsonSchema? schema, Uri uri) {
-    if (uri.fragment?.isNotEmpty == true) {
+    if (uri.fragment.isNotEmpty == true) {
       schema = schema!.resolvePath(Uri.parse('#${uri.fragment}'));
     }
     return schema;
@@ -68,9 +68,10 @@ class JsonSchemaUtils {
 
 @Deprecated('4.0, to be removed in 5.0, use customVocabularies param of JsonSchema factories instead.')
 class DefaultValidators {
-  emailValidator(String email) => JsonSchemaValidationRegexes.email.firstMatch(email) != null;
+  emailValidator(String? email) => email != null && JsonSchemaValidationRegexes.email.firstMatch(email) != null;
 
-  uriValidator(String uri) {
+  uriValidator(String? uri) {
+    if (uri == null) return false;
     try {
       final result = Uri.parse(uri);
       // If a URI has no scheme, it is invalid.
@@ -85,7 +86,8 @@ class DefaultValidators {
     }
   }
 
-  uriReferenceValidator(String uriReference) {
+  uriReferenceValidator(String? uriReference) {
+    if (uriReference == null) return false;
     try {
       Uri.parse(uriReference);
       // If a URI contains spaces, it is invalid.
@@ -98,7 +100,8 @@ class DefaultValidators {
     }
   }
 
-  uriTemplateValidator(String uriTemplate) {
+  uriTemplateValidator(String? uriTemplate) {
+    if (uriTemplate == null) return false;
     try {
       UriTemplate(uriTemplate);
       return true;

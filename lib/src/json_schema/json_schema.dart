@@ -64,7 +64,7 @@ import 'package:json_schema/src/json_schema/schema_url_client/stub_schema_url_cl
 
 class RetrievalRequest {
   Uri? schemaUri;
-  late AsyncRetrievalOperation asyncRetrievalOperation;
+  AsyncRetrievalOperation? asyncRetrievalOperation;
   SyncRetrievalOperation? syncRetrievalOperation;
 }
 
@@ -91,22 +91,19 @@ class JsonSchema {
     bool isSync = false,
     Map<String, JsonSchema?>? refMap,
     RefProvider? refProvider,
-    Map<Uri, bool>? metaschemaVocabulary,
+    Map<Uri, bool>? metaSchemaVocabulary,
     List<CustomVocabulary>? customVocabularies,
     Map<String, Map<String, SchemaPropertySetter>>? customVocabMap,
     Map<String, ValidationContext Function(ValidationContext context, String? instanceData)> customFormats = const {},
-  })  : _schemaMap = schemaMap != null ? Map<String, dynamic>.unmodifiable(schemaMap) : null,
+  })  : _schemaMap = Map<String, dynamic>.unmodifiable(schemaMap),
         _schemaBool = null {
-    if (schemaMap == null) {
-      throw ArgumentError.notNull('schemaMap');
-    }
     _initialize(
       schemaVersion: schemaVersion,
       fetchedFromUri: fetchedFromUri,
       isSync: isSync,
       refMap: refMap,
       refProvider: refProvider,
-      metaschemaVocabulary: metaschemaVocabulary,
+      metaschemaVocabulary: metaSchemaVocabulary,
       customVocabMap: customVocabMap ?? _createCustomVocabMap(customVocabularies),
       customFormats: customFormats,
     );
@@ -340,11 +337,11 @@ class JsonSchema {
   void _validateAndSetIndividualProperties() {
     Map<String, SchemaPropertySetter> accessMap = {};
     // Set the access map based on features used in the currently set version.
-    if (_root!.schemaVersion == SchemaVersion.draft4) {
+    if (_root?.schemaVersion == SchemaVersion.draft4) {
       accessMap = _accessMapV4;
-    } else if (_root!.schemaVersion == SchemaVersion.draft6) {
+    } else if (_root?.schemaVersion == SchemaVersion.draft6) {
       accessMap = _accessMapV6;
-    } else if (_root!.schemaVersion >= SchemaVersion.draft2019_09) {
+    } else if (_root?.schemaVersion != null && _root!.schemaVersion >= SchemaVersion.draft2019_09) {
       final vocabMap = Map()
         ..addAll(_vocabMaps)
         ..addAll(_customVocabMap!);
@@ -420,17 +417,17 @@ class JsonSchema {
         final Uri? schemaUri = retrievalRequest.schemaUri;
 
         // Attempt to resolve schema if it does not exist within ref map already.
-        if (_refMap[schemaUri.toString()] == null) {
-          final Uri baseUri = schemaUri!.scheme.isNotEmpty ? schemaUri.removeFragment() : schemaUri;
+        if (schemaUri != null && _refMap[schemaUri.toString()] == null) {
+          final Uri baseUri = schemaUri.scheme.isNotEmpty ? schemaUri.removeFragment() : schemaUri;
           final String baseUriString = '${baseUri}#';
 
           if (baseUri.path == _inheritedUri?.path) {
             // If the ref base is the same as the _inheritedUri, ref is _root schema.
             localSchema = _root;
-          } else if (baseUriString != null && _refMap[baseUriString] != null) {
+          } else if (_refMap[baseUriString] != null) {
             // If the ref base is already in the _refMap, set it directly.
             localSchema = _refMap[baseUriString];
-          } else if (baseUriString != null && SchemaVersion.fromString(baseUriString) != null) {
+          } else if (SchemaVersion.fromString(baseUriString) != null) {
             // If the referenced URI is or within versioned schema spec.
             final staticSchema = getStaticSchemaByVersion(SchemaVersion.fromString(baseUriString));
             if (staticSchema != null) {
@@ -443,7 +440,7 @@ class JsonSchema {
 
           // Resolve sub schema of fetched schema if a fragment was included.
           if (resolvedSuccessfully && schemaUri.fragment.isNotEmpty) {
-            localSchema!.resolvePath(Uri.parse('#${schemaUri.fragment}'));
+            localSchema?.resolvePath(Uri.parse('#${schemaUri.fragment}'));
           }
         }
 
@@ -462,7 +459,8 @@ class JsonSchema {
   void _resolveAllPathsAsync() async {
     if (_root == this) {
       if (_retrievalRequests.isNotEmpty) {
-        await Future.wait(_retrievalRequests.map((r) => r.asyncRetrievalOperation()));
+        final asyncRetrievalOps = _retrievalRequests.map<AsyncRetrievalOperation?>((r) => r.asyncRetrievalOperation).whereType<AsyncRetrievalOperation>();
+        await Future.wait(asyncRetrievalOps.map((aro) => aro()));
       }
 
       _schemaAssignments.forEach((assignment) => assignment());
@@ -477,10 +475,8 @@ class JsonSchema {
       // the provider returns a result.
       if (_refProvider != null) {
         while (_retrievalRequests.isNotEmpty) {
-          final r = _retrievalRequests.removeAt(0);
-          if (r.syncRetrievalOperation != null) {
-            r.syncRetrievalOperation!();
-          }
+          final sro = _retrievalRequests.removeAt(0).syncRetrievalOperation;
+          if (sro != null) sro();
         }
       }
 
@@ -516,7 +512,7 @@ class JsonSchema {
     if (_root!._metaSchemaCompleter.isCompleted) {
       return;
     }
-    if (schemaVersion! >= SchemaVersion.draft2019_09) {
+    if (schemaVersion != null && schemaVersion >= SchemaVersion.draft2019_09) {
       final baseUri = Uri.parse(schemaString ?? schemaVersion.toString());
       if (_root!._isSync) {
         _resolveMetaSchemasSync(baseUri);
@@ -531,8 +527,8 @@ class JsonSchema {
 
   void _resolveMetaSchemasSync(Uri baseUri) {
     final Map? staticSchema = getStaticSchemaByURI(baseUri) ??
-        _refProvider!.provide(baseUri.toString()) ??
-        _refProvider!.provide('${baseUri}#');
+        _refProvider?.provide(baseUri.toString()) ??
+        _refProvider?.provide('${baseUri}#');
 
     if (staticSchema?.containsKey(r'$vocabulary') == true) {
       _setMetaschemaVocabulary(staticSchema![r'$vocabulary']);
@@ -559,6 +555,7 @@ class JsonSchema {
 
   /// Given a [Uri] path, find the ref'd [JsonSchema] from the map.
   JsonSchema? _getSchemaFromPath(Uri? pathUri, [Set<Uri?>? refsEncountered]) {
+    if (pathUri == null) return null;
     // Store encountered refs to avoid cycles.
     refsEncountered ??= {};
 
@@ -568,7 +565,7 @@ class JsonSchema {
     }
 
     Uri basePathUri;
-    if (pathUri!.host.isEmpty && pathUri.path.isEmpty && (_uri != null || _inheritedUri != null)) {
+    if (pathUri.host.isEmpty && pathUri.path.isEmpty && (_uri != null || _inheritedUri != null)) {
       // Prepend _uri or _inheritedUri to provided [Uri] path if no host or path detected.
       pathUri = _translateLocalRefToFullUri(pathUri);
     }
@@ -695,7 +692,7 @@ class JsonSchema {
           if (schemaValues is JsonSchema) {
             // Continue iteration if result is a valid schema.
             currentSchema = schemaValues;
-          } else if (schemaValues is Map<String, JsonSchema>) {
+          } else if (schemaValues is Map<String, JsonSchema?>) {
             // Map properties use the following fragment to fetch the value by key.
             i += 1;
             String propertyKey = fragments[i];
@@ -717,7 +714,7 @@ class JsonSchema {
               throw FormatException(
                   'Failed to get schema at path: "$fragment/$propertyKey". Property must be a valid schema : $currentSchema');
             }
-          } else if (schemaValues is List<JsonSchema>) {
+          } else if (schemaValues is List<JsonSchema?>) {
             // List properties use the following fragment to fetch the value by index.
             i += 1;
             final String propertyIndex = fragments[i];
@@ -736,7 +733,6 @@ class JsonSchema {
           }
         } else {
           // Fragment might be a custom property, pull from _refMap and throw if result is not a valid JsonSchema.
-
           // If the currentSchema does not have a _uri set from refProvider, check _refMap for fragment only.
           String currentSchemaRefPath = pathUri.toString();
           if (currentSchema?._uri == null && currentSchema?._inheritedUri == null) {
@@ -874,7 +870,7 @@ class JsonSchema {
         refMap: _refMap,
         refProvider: _refProvider,
         fetchedFromUri: baseUri,
-        metaschemaVocabulary: _root!._metaschemaVocabulary,
+        metaSchemaVocabulary: _root!._metaschemaVocabulary,
         customVocabMap: _root!._customVocabMap,
         customFormats: _root!._customFormats,
       );

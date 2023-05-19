@@ -42,7 +42,6 @@ class TypeValidators {
   }
 
   static List<SchemaType?> typeList(String key, Object? value) {
-    print('key: $key, value: $value');
     var typeList;
     if (value is String) {
       typeList = [SchemaType.fromString(value)];
