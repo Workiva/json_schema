@@ -1,5 +1,5 @@
 name: json_schema
-version: 5.0.0-rc1
+version: 5.0.0-rc1rc1
 description: JSON Schema implementation in Dart
 homepage: https://github.com/workiva/json_schema
 
