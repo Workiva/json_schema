@@ -1,11 +1,8 @@
-## 5.0.2
-- Add an `JsonSchema.empty({SchemaVersion schemaVersion})` constructor
-- Allow resolving relative refs via `JsonSchema.resolvePath()`
-
 ## 5.0.1
-- Clean up pubspec, add .pubignore
+- Add an `JsonSchema.empty({SchemaVersion schemaVersion})` constructor
 
 ## 5.0.0
+- Clean up pubspec, add .pubignore
 - Bump minimum Dart SDK version to 2.12.0
 - Migration to null safety
 
