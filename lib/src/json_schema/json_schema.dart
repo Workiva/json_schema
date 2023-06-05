@@ -68,6 +68,8 @@ class RetrievalRequest {
   SyncRetrievalOperation? syncRetrievalOperation;
 }
 
+final Map<SchemaVersion, JsonSchema> _emptySchemas = {};
+
 /// Constructed with a json schema, either as string or Map. Validation of
 /// the schema itself is done on construction. Any errors in the schema
 /// result in a FormatException being thrown.
@@ -268,6 +270,11 @@ class JsonSchema {
   }) {
     return createClient().createFromUrl(schemaUrl,
         schemaVersion: schemaVersion, customVocabularies: customVocabularies, customFormats: customFormats);
+  }
+
+  /// Create an empty schema.
+  static JsonSchema empty({SchemaVersion schemaVersion = SchemaVersion.defaultVersion}) {
+    return _emptySchemas[schemaVersion] ??= JsonSchema.create({}, schemaVersion: schemaVersion);
   }
 
   /// Construct and validate a JsonSchema.
@@ -1512,7 +1519,7 @@ class JsonSchema {
   ///
   /// Note: Only one version can be used for a nested [JsonSchema] object.
   /// Default: [SchemaVersion.draft7]
-  SchemaVersion get schemaVersion => _root?._schemaVersion ?? SchemaVersion.draft7;
+  SchemaVersion get schemaVersion => _root?._schemaVersion ?? SchemaVersion.defaultVersion;
 
   /// Base [Uri] of the [JsonSchema] based on $id, or where it was fetched from, in that order, if any.
   Uri? get _uriBase => _idBase ?? _fetchedFromUriBase;
@@ -2334,7 +2341,7 @@ class JsonSchema {
     } else if (schema is Map && schema[r'$schema'] is String) {
       return TypeValidators.builtInSchemaVersion(r'$schema', schema[r'$schema']);
     }
-    return SchemaVersion.draft7;
+    return SchemaVersion.defaultVersion;
   }
 
   /// Validate, calculate and set the value of the 'title' JSON Schema keyword.
