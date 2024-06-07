@@ -530,17 +530,19 @@ class Validator {
         }
       });
 
-      if (!propCovered) {
+      if (propCovered) {
+        _addEvaluatedProp(newInstance);
+      } else {
         final additionalPropertiesSchema = schema.additionalPropertiesSchema;
         if (additionalPropertiesSchema != null) {
           _validate(additionalPropertiesSchema, newInstance);
+          _addEvaluatedProp(newInstance);
         } else if (propMustValidate) {
-          _err('unallowed additional property $k', instance.path, '${schema.path!}/additionalProperties');
+          _err('unallowed additional property $k', instance.path,
+              '${schema.path!}/additionalProperties');
         } else if (schema.additionalPropertiesBool == true) {
           _addEvaluatedProp(newInstance);
         }
-      } else {
-        _addEvaluatedProp(newInstance);
       }
     });
   }

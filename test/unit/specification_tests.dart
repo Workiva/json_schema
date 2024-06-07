@@ -38152,7 +38152,24 @@ Map<String, String> specificationTests = {
                 "valid": false
             }
         ]
-    }
+    },
+    {
+      "description": "additionalProperties",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {"type": "object"},
+        "unevaluatedProperties": false
+      },
+      "tests": [
+       {
+          "description": "are evaluated",
+          "data": {
+            "anyKey": {}
+          },
+          "valid": true
+       }
+    ]
+  }
 ]
 """,
   "/draft2020-12/uniqueItems.json": r"""[
@@ -78197,7 +78214,24 @@ Map<String, String> specificationTests = {
                 "valid": false
             }
         ]
-    }
+    },
+    {
+      "description": "additionalProperties",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {"type": "object"},
+        "unevaluatedProperties": false
+      },
+      "tests": [
+       {
+          "description": "are evaluated",
+          "data": {
+            "anyKey": {}
+          },
+          "valid": true
+       }
+    ]
+  }
 ]
 """,
   "/latest/uniqueItems.json": r"""[
