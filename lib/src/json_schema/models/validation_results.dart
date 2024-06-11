@@ -40,7 +40,8 @@ import 'package:json_schema/src/json_schema/validator.dart';
 
 /// The result of validating data against a schema
 class ValidationResults {
-  ValidationResults(List<ValidationError> errors, List<ValidationError> warnings)
+  ValidationResults(
+      List<ValidationError> errors, List<ValidationError> warnings)
       : errors = List.of(errors),
         warnings = List.of(warnings);
 
@@ -52,7 +53,9 @@ class ValidationResults {
 
   @override
   String toString() {
-    return '${errors.isEmpty ? 'VALID' : 'INVALID'}${errors.isEmpty ? ', Errors: $errors' : ''}${warnings.isEmpty ? ', Warnings: $warnings' : ''}';
+    return '${errors.isEmpty ? 'VALID' : 'INVALID'}'
+        '${errors.isEmpty ? '' : ', Errors: $errors'}'
+        '${warnings.isEmpty ? '' : ', Warnings: $warnings'}';
   }
 
   /// Whether the [Instance] was valid against its [JsonSchema]
