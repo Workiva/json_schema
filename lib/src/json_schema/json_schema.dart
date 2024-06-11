@@ -305,7 +305,10 @@ class JsonSchema {
       _customFormats = customFormats;
       _rootMemomizedPathResults = {};
       try {
-        _fetchedFromUriBase = JsonSchemaUtils.getBaseFromFullUri(_fetchedFromUri!);
+        // Only fetch the base if given
+        if (_fetchedFromUri != null) {
+          _fetchedFromUriBase = JsonSchemaUtils.getBaseFromFullUri(_fetchedFromUri!);
+        }
       } catch (e) {
         // ID base can't be set for schemes other than HTTP(S).
         // This is expected behavior.
