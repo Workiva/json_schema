@@ -1307,5 +1307,22 @@
                 "valid": false
             }
         ]
-    }
+    },
+    {
+      "description": "additionalProperties",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {"type": "object"},
+        "unevaluatedProperties": false
+      },
+      "tests": [
+       {
+          "description": "are evaluated",
+          "data": {
+            "anyKey": {}
+          },
+          "valid": true
+       }
+    ]
+  }
 ]
