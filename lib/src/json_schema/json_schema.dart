@@ -1457,8 +1457,10 @@ class JsonSchema {
     return accessorMap;
   }
 
+  // temporarily uses a constructed full path for relative. can be optimized in the future
   /// Get a nested [JsonSchema] from a path.
-  JsonSchema resolvePath(Uri? path) => _getSchemaFromPath(path);
+  JsonSchema resolvePath(Uri? path) =>
+      _getSchemaFromPath(path?.toString().startsWith('/') == true ? Uri.parse('${this.path}${path}') : path);
 
   /// Get a [JsonSchema] from the dynamicParent with the given anchor. Returns null if none exists.
   JsonSchema? resolveDynamicAnchor(String dynamicAnchor, {JsonSchema? dynamicParent}) =>

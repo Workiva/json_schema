@@ -21,12 +21,14 @@ main() {
         'baz': {
           '\$ref': '#a_anchor',
           'properties': {
-            'findMe': {'const': 'is found'}
+            'findMe': {'const': 'is found nested'}
           }
-        }
+        },
+        'findMe': {'const': 'is found at root'}
       }
     }, schemaVersion: SchemaVersion.draft2020_12);
   });
+
   group('Resolve path', () {
     test('ref resolved immediately when it is the only property.', () {
       var ref = testSchema.resolvePath(Uri.parse('#/properties/foo'));
@@ -41,7 +43,7 @@ main() {
 
     test('should continue resolving in the current node even if there is a ref', () {
       final ref = testSchema.resolvePath(Uri.parse('#/properties/baz/properties/findMe'));
-      expect(ref.constValue, 'is found');
+      expect(ref.constValue, 'is found nested');
     });
 
     test('should follow the ref and continue resolving', () {
@@ -84,6 +86,20 @@ main() {
         }
       }, schemaVersion: SchemaVersion.draft2020_12);
       expect(() => schema.resolvePath(Uri.parse('#/properties/Q/a')), throwsException);
+    });
+
+    test('should resolve relative path from resolved sub schema', () {
+      final subSchema = testSchema.resolvePath(Uri.parse('#/properties/baz'));
+      final superSubSchema = subSchema.resolvePath(Uri.parse('/properties/findMe'));
+
+      expect(superSubSchema.constValue, 'is found nested');
+    });
+
+    test('should resolve root document path from root schema', () {
+      final subSchema = testSchema.resolvePath(Uri.parse('#/properties/baz'));
+      final superSubSchema = subSchema.resolvePath(Uri.parse('#/properties/findMe'));
+
+      expect(superSubSchema.constValue, 'is found at root');
     });
   });
 }
