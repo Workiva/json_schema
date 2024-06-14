@@ -282,9 +282,9 @@ class Validator {
     final minLength = schema.minLength;
     final maxLength = schema.maxLength;
     if (maxLength is int && actual > maxLength) {
-      _err('maxLength exceeded ($instance vs $maxLength)', instance.path, schema.path!);
+      _err('maxLength exceeded ($actual vs $maxLength)', instance.path, schema.path!);
     } else if (minLength is int && actual < minLength) {
-      _err('minLength violated ($instance vs $minLength)', instance.path, schema.path!);
+      _err('minLength violated ($actual vs $minLength)', instance.path, schema.path!);
     }
     final pattern = schema.pattern;
     if (pattern != null && !pattern.hasMatch(instance.data)) {
