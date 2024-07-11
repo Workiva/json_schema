@@ -48,7 +48,9 @@ main() {
     'additionalProperties': false,
     'required': ['movies'],
     'properties': {
-      'movies': {r'$ref': '#/definitions/movie_map'}
+      'movies': {
+        '\$ref': '#/definitions/movie_map',
+      },
     },
     'definitions': {
       'movie': {
@@ -56,28 +58,41 @@ main() {
         'required': ['title', 'year_made', 'rating'],
         'properties': {
           'title': {'type': 'string'},
-          'year_made': {'type': 'integer'},
-          'rating': {'type': 'integer'}
-        }
+          'year_made': {
+            'type': 'integer',
+            'minimum': 2024,
+            'title': 'Product',
+            'customMessage': {
+              'widget_id': "year_made",
+              'message': "The year must be in the future"
+            },
+          },
+          'rating': {'type': 'integer'},
+        },
       },
       'movie_map': {
         'type': 'object',
-        'additionalProperties': {r'$ref': '#/definitions/movie'},
-        'default': {}
-      }
-    }
+        'additionalProperties': {
+          '\$ref': '#/definitions/movie',
+        },
+        'default': {},
+      },
+    },
   };
 
   final movies = {
     'movies': {
       'the mission': {'title': 'The Mission', 'year_made': 1986, 'rating': 5},
-      'troll 2': {'title': 'Troll 2', 'year_made': 1990, 'rating': 2}
+      'troll 2': {'title': 'Troll 2', 'year_made': 1990, 'rating': 2},
     }
   };
 
   JsonSchema.createAsync(movieSchema).then((schema) {
     final validator = Validator(schema);
     final results = validator.validate(movies, reportMultipleErrors: true);
-    print('$movies:\n$results');
+    for (var element in results.errors) {
+      print(element.message);
+      print(element.customMessage ?? 'no custom message');
+    }
   });
 }

@@ -1070,6 +1070,9 @@ class JsonSchema {
   /// Title of the [JsonSchema].
   String? _title;
 
+  /// A custom error message of the [JsonSchema].
+  String? _customMessage;
+
   /// List of allowable types for the [JsonSchema].
   List<SchemaType?>? _typeList;
 
@@ -1222,6 +1225,7 @@ class JsonSchema {
     'pattern': (JsonSchema s, dynamic v) => s._setPattern(v),
     '\$ref': (JsonSchema s, dynamic v) => s._setRef(v),
     'title': (JsonSchema s, dynamic v) => s._setTitle(v),
+    'customMessage': (JsonSchema s, dynamic v) => s._setCustomMessage(v),
     'type': (JsonSchema s, dynamic v) => s._setType(v),
     // Schema List Item Related Fields
     'items': (JsonSchema s, dynamic v) => s._setItems(v),
@@ -1326,6 +1330,7 @@ class JsonSchema {
 
   static final Map<String, SchemaPropertySetter> _draft2019Metadata = <String, SchemaPropertySetter>{}..addAll({
       'title': (JsonSchema s, dynamic v) => s._setTitle(v),
+      'customMessage': (JsonSchema s, dynamic v) => s._setCustomMessage(v),
       'description': (JsonSchema s, dynamic v) => s._setDescription(v),
       'default': (JsonSchema s, dynamic v) => s._setDefault(v),
       'deprecated': (JsonSchema s, dynamic v) => s._setDeprecated(v),
@@ -1745,6 +1750,9 @@ class JsonSchema {
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-7.2
   String? get title => _title;
+
+  /// A custom error message of the [JsonSchema].
+  String? get customMessage => _customMessage;
 
   /// A [JsonSchema] used for validation if the schema also validates against the 'if' schema.
   ///
@@ -2338,6 +2346,16 @@ class JsonSchema {
 
   /// Validate, calculate and set the value of the 'title' JSON Schema keyword.
   _setTitle(Object value) => _title = TypeValidators.string('title', value);
+
+  /// Sets the value of the 'customMessage' JSON Schema keyword.
+  _setCustomMessage(Object value) => _customMessage = TypeValidators.string(
+    'customMessage',
+    value is String
+        ? value
+        : jsonEncode(
+            value,
+            toEncodable: (nonEncodable) => null,
+          ));
 
   /// Validate, calculate and set the value of the 'then' JSON Schema keyword.
   _setThen(Object value) {

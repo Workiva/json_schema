@@ -55,13 +55,16 @@ import 'package:json_schema/src/json_schema/models/schema_type.dart';
 final Logger _logger = Logger('Validator');
 
 class ValidationError {
-  ValidationError._(this.instancePath, this.schemaPath, this.message);
+  ValidationError._(this.instancePath, this.schemaPath, this.message, {this.customMessage});
 
   /// Path in the instance data to the key where this error occurred
   String? instancePath;
 
   /// Path to the key in the schema containing the rule that produced this error
   String? schemaPath;
+
+  /// A custom error message
+  String? customMessage;
 
   /// A human-readable message explaining why validation failed
   String message;
@@ -201,21 +204,21 @@ class Validator {
 
     if (exclusiveMaximum != null) {
       if (n! >= exclusiveMaximum) {
-        _err('exclusiveMaximum exceeded ($n >= $exclusiveMaximum)', instance.path, schema.path!);
+        _err('exclusiveMaximum exceeded ($n >= $exclusiveMaximum)', instance.path, schema.path!, jsonSchema: schema);
       }
     } else if (maximum != null) {
       if (n! > maximum) {
-        _err('maximum exceeded ($n > $maximum)', instance.path, schema.path!);
+        _err('maximum exceeded ($n > $maximum)', instance.path, schema.path!, jsonSchema: schema);
       }
     }
 
     if (exclusiveMinimum != null) {
       if (n! <= exclusiveMinimum) {
-        _err('exclusiveMinimum violated ($n <= $exclusiveMinimum)', instance.path, schema.path!);
+        _err('exclusiveMinimum violated ($n <= $exclusiveMinimum)', instance.path, schema.path!, jsonSchema: schema);
       }
     } else if (minimum != null) {
       if (n! < minimum) {
-        _err('minimum violated ($n < $minimum)', instance.path, schema.path!);
+        _err('minimum violated ($n < $minimum)', instance.path, schema.path!, jsonSchema: schema);
       }
     }
 
@@ -223,14 +226,14 @@ class Validator {
     if (multipleOf != null) {
       if (multipleOf is int && n is int) {
         if (0 != n % multipleOf) {
-          _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path!);
+          _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path!, jsonSchema: schema);
         }
       } else {
         final double result = n! / multipleOf;
         if (result == double.infinity) {
-          _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path!);
+          _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path!, jsonSchema: schema);
         } else if (result.truncate() != result) {
-          _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path!);
+          _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path!, jsonSchema: schema);
         }
       }
     }
@@ -240,14 +243,14 @@ class Validator {
     final typeList = schema.typeList;
     if (typeList != null && typeList.isNotEmpty) {
       if (!typeList.any((type) => _typeMatch(type, schema, instance.data))) {
-        _err('type: wanted $typeList got $instance', instance.path, schema.path!);
+        _err('type: wanted $typeList got $instance', instance.path, schema.path!, jsonSchema: schema);
       }
     }
   }
 
   void _constValidation(JsonSchema schema, dynamic instance) {
     if (schema.hasConst && !DeepCollectionEquality().equals(instance.data, schema.constValue)) {
-      _err('const violated $instance', instance.path, schema.path!);
+      _err('const violated $instance', instance.path, schema.path!, jsonSchema: schema);
     }
   }
 
@@ -257,7 +260,7 @@ class Validator {
       try {
         enumValues!.singleWhere((v) => DeepCollectionEquality().equals(instance.data, v));
       } on StateError {
-        _err('enum violated $instance', instance.path, schema.path!);
+        _err('enum violated $instance', instance.path, schema.path!, jsonSchema: schema);
       }
     }
   }
@@ -282,13 +285,13 @@ class Validator {
     final minLength = schema.minLength;
     final maxLength = schema.maxLength;
     if (maxLength is int && actual > maxLength) {
-      _err('maxLength exceeded ($instance vs $maxLength)', instance.path, schema.path!);
+      _err('maxLength exceeded ($instance vs $maxLength)', instance.path, schema.path!, jsonSchema: schema);
     } else if (minLength is int && actual < minLength) {
-      _err('minLength violated ($instance vs $minLength)', instance.path, schema.path!);
+      _err('minLength violated ($instance vs $minLength)', instance.path, schema.path!, jsonSchema: schema);
     }
     final pattern = schema.pattern;
     if (pattern != null && !pattern.hasMatch(instance.data)) {
-      _err('pattern violated ($instance vs $pattern)', instance.path, schema.path!);
+      _err('pattern violated ($instance vs $pattern)', instance.path, schema.path!, jsonSchema: schema);
     }
   }
 
@@ -351,7 +354,7 @@ class Validator {
             }
           } else if (additionalItemsBool != null) {
             if (!additionalItemsBool && actual > end) {
-              _err('additionalItems false', instance.path, '${schema.path!}/additionalItems');
+              _err('additionalItems false', instance.path, '${schema.path!}/additionalItems',jsonSchema: schema);
             } else {
               // All the items in this list have been evaluated.
               _setAllItemsAsEvaluated();
@@ -364,9 +367,9 @@ class Validator {
     final maxItems = schema.maxItems;
     final minItems = schema.minItems;
     if (maxItems is int && actual > maxItems) {
-      _err('maxItems exceeded ($actual vs $maxItems)', instance.path, schema.path!);
+      _err('maxItems exceeded ($actual vs $maxItems)', instance.path, schema.path!, jsonSchema: schema);
     } else if (minItems is int && actual < minItems) {
-      _err('minItems violated ($actual vs $minItems)', instance.path, schema.path!);
+      _err('minItems violated ($actual vs $minItems)', instance.path, schema.path!, jsonSchema: schema);
     }
 
     if (schema.uniqueItems) {
@@ -375,7 +378,7 @@ class Validator {
       for (int i = 0; i < penultimate; i++) {
         for (int j = i + 1; j < end; j++) {
           if (DeepCollectionEquality().equals(instance.data[i], instance.data[j])) {
-            _err('uniqueItems violated: $instance [$i]==[$j]', instance.path, schema.path!);
+            _err('uniqueItems violated: $instance [$i]==[$j]', instance.path, schema.path!, jsonSchema: schema);
           }
         }
       }
@@ -395,13 +398,13 @@ class Validator {
         }
       }
       if (minContains is int && containsItems.length < minContains) {
-        _err('minContains violated: $instance', instance.path, schema.path!);
+        _err('minContains violated: $instance', instance.path, schema.path!, jsonSchema: schema);
       }
       if (maxContains is int && containsItems.length > maxContains) {
-        _err('maxContains violated: $instance', instance.path, schema.path!);
+        _err('maxContains violated: $instance', instance.path, schema.path!, jsonSchema: schema);
       }
       if (containsItems.isEmpty && !(minContains is int && minContains == 0)) {
-        _err('contains violated: $instance', instance.path, schema.path!);
+        _err('contains violated: $instance', instance.path, schema.path!, jsonSchema: schema);
       }
     }
   }
@@ -412,7 +415,7 @@ class Validator {
       final actual = instance.data.length;
       if (unevaluatedItems.schemaBool != null) {
         if (unevaluatedItems.schemaBool == false && actual > _evaluatedItemCount) {
-          _err('unevaluatedItems false', instance.path, '${schema.path!}/unevaluatedItems');
+          _err('unevaluatedItems false', instance.path, '${schema.path!}/unevaluatedItems', jsonSchema: schema);
         }
       } else {
         var evaluatedItemsList = _evaluatedItemsContext.last;
@@ -450,7 +453,7 @@ class Validator {
 
   _validateAllOf(JsonSchema schema, Instance instance) {
     if (!schema.allOf.every((s) => _validateAndCaptureEvaluations(s, instance))) {
-      _err('${schema.path}: allOf violated $instance', instance.path, '${schema.path!}/allOf');
+      _err('${schema.path}: allOf violated $instance', instance.path, '${schema.path!}/allOf',jsonSchema: schema);
     }
   }
 
@@ -468,7 +471,7 @@ class Validator {
     }
     if (!anyOfValid) {
       // TODO: deal with /anyOf
-      _err('${schema.path}/anyOf: anyOf violated ($instance, ${schema.anyOf})', instance.path, '${schema.path!}/anyOf');
+      _err('${schema.path}/anyOf: anyOf violated ($instance, ${schema.anyOf})', instance.path, '${schema.path!}/anyOf', jsonSchema: schema);
     }
   }
 
@@ -483,7 +486,7 @@ class Validator {
 
   void _validateNot(JsonSchema schema, Instance instance) {
     if (Validator(schema.notSchema).validate(instance).isValid) {
-      _err('${schema.notSchema?.path}: not violated', instance.path, schema.notSchema!.path!);
+      _err('${schema.notSchema?.path}: not violated', instance.path, schema.notSchema!.path!, jsonSchema: schema);
     }
   }
 
@@ -538,7 +541,7 @@ class Validator {
           _validate(additionalPropertiesSchema, newInstance);
           _addEvaluatedProp(newInstance);
         } else if (propMustValidate) {
-          _err('unallowed additional property $k', instance.path, '${schema.path!}/additionalProperties');
+          _err('unallowed additional property $k', instance.path, '${schema.path!}/additionalProperties', jsonSchema: schema);
         } else if (schema.additionalPropertiesBool == true) {
           _addEvaluatedProp(newInstance);
         }
@@ -550,7 +553,7 @@ class Validator {
     schema.propertyDependencies.forEach((k, dependencies) {
       if (instance.data.containsKey(k)) {
         if (!dependencies.every((prop) => instance.data.containsKey(prop))) {
-          _err('prop $k => $dependencies required', instance.path, '${schema.path!}/dependencies');
+          _err('prop $k => $dependencies required', instance.path, '${schema.path!}/dependencies', jsonSchema: schema);
         } else {
           _addEvaluatedProp(instance);
         }
@@ -562,7 +565,7 @@ class Validator {
     schema.schemaDependencies.forEach((k, otherSchema) {
       if (instance.data.containsKey(k)) {
         if (!_validateAndCaptureEvaluations(otherSchema, instance)) {
-          _err('prop $k violated schema dependency', instance.path, otherSchema.path!);
+          _err('prop $k violated schema dependency', instance.path, otherSchema.path!, jsonSchema: schema);
         } else {
           _addEvaluatedProp(instance);
         }
@@ -576,9 +579,9 @@ class Validator {
     final minProps = schema.minProperties;
     final maxProps = schema.maxProperties;
     if (numProps < minProps) {
-      _err('minProperties violated ($numProps < $minProps)', instance.path, schema.path!);
+      _err('minProperties violated ($numProps < $minProps)', instance.path, schema.path!, jsonSchema: schema);
     } else if (maxProps != null && numProps > maxProps) {
-      _err('maxProperties violated ($numProps > $maxProps)', instance.path, schema.path!);
+      _err('maxProperties violated ($numProps > $maxProps)', instance.path, schema.path!, jsonSchema: schema);
     }
 
     // Required Properties
@@ -586,9 +589,9 @@ class Validator {
       for (final prop in schema.requiredProperties!) {
         if (!instance.data.containsKey(prop)) {
           // One error for the root object that contains the missing property.
-          _err('required prop missing: $prop from $instance', instance.path, '${schema.path!}/required');
+          _err('required prop missing: $prop from $instance', instance.path, '${schema.path!}/required', jsonSchema: schema);
           // Another error for the property on the root object. (Allows consumers to identify errors for individual fields)
-          _err('required prop missing: $prop from $instance', '${instance.path}/$prop', '${schema.path!}/required');
+          _err('required prop missing: $prop from $instance', '${instance.path}/$prop', '${schema.path!}/required', jsonSchema: schema);
         }
       }
     }
@@ -723,7 +726,7 @@ class Validator {
     if (schema.schemaBool != null) {
       if (schema.schemaBool == false) {
         _err('schema is a boolean == false, this schema will never validate. Instance: $instance', instance.path,
-            schema.path!);
+            schema.path!, jsonSchema: schema);
       }
       return;
     }
@@ -763,14 +766,14 @@ class Validator {
         if (schema.thenSchema == null) return true;
         if (!_validateAndCaptureEvaluations(schema.thenSchema, instance)) {
           _err('${schema.path}/then: then violated ($instance, ${schema.thenSchema})', instance.path,
-              '${schema.path!}/then');
+              '${schema.path!}/then', jsonSchema: schema);
         }
       } else {
         // Bail out early if no "else" is specified.
         if (schema.elseSchema == null) return true;
         if (!_validateAndCaptureEvaluations(schema.elseSchema, instance)) {
           _err('${schema.path}/else: else violated ($instance, ${schema.elseSchema})', instance.path,
-              '${schema.path!}/else');
+              '${schema.path!}/else', jsonSchema: schema);
         }
       }
       // Return early since we recursively call _validate in these cases.
@@ -855,9 +858,9 @@ class Validator {
     return oldParent;
   }
 
-  void _err(String msg, String? instancePath, String schemaPath) {
+  void _err(String msg, String? instancePath, String schemaPath,{JsonSchema? jsonSchema}) {
     schemaPath = schemaPath.replaceFirst('#', '');
-    _errors.add(ValidationError._(instancePath, schemaPath, msg));
+    _errors.add(ValidationError._(instancePath, schemaPath, msg,customMessage: jsonSchema?.customMessage,));
     if (!_reportMultipleErrors) throw FormatException(msg);
   }
 
