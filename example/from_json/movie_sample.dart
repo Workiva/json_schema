@@ -60,11 +60,52 @@ main() {
           'title': {'type': 'string'},
           'year_made': {
             'type': 'integer',
-            'minimum': 2024,
+            'minimum': 2020,
+            'maximum': 2024,
             'title': 'Product',
             'customMessage': {
-              'widget_id': "year_made",
-              'message': "The year must be in the future"
+              'general_message': {
+                'widget_id': 'year_made',
+                'recordset_id': 'movies',
+              },
+              'numberValidation_minimum': {
+                'message':
+                    "Kindly change the value to be greater than 2020 ANY MESSAGE YOU WANT",
+              },
+              'numberValidation_maximum': {
+                'message':
+                    "Kindly change the value to be less than 2024 ANY MESSAGE YOU WANT",
+              },
+              'numberValidation_exclusiveMaximum': {},
+              'numberValidation_exclusiveMinimum': {},
+              'numberValidation_multipleOf': {},
+              'typeValidation': {},
+              'constValidation': {},
+              'enumValidation': {},
+              'stringValidation_maxLength': {},
+              'stringValidation_minLength': {},
+              'stringValidation_pattern': {},
+              'itemsValidation_additionalItems': {},
+              'itemsValidation_maxItems': {},
+              'itemsValidation_minItems': {},
+              'itemsValidation_uniqueItems': {},
+              'itemsValidation_minContains': {},
+              'itemsValidation_maxContains': {},
+              'itemsValidation_contains': {},
+              'validateUnevaluatedItems': {},
+              'validateAllOf': {},
+              'validateAnyOf': {},
+              'validateNot': {},
+              'objectPropertyValidation': {},
+              'propertyDependenciesValidation': {},
+              'schemaDependenciesValidation': {},
+              'objectValidation_minProperties': {},
+              'objectValidation_maxProperties': {},
+              'objectValidation_requiredProperties_root': {},
+              'objectValidation_requiredProperties_property': {},
+              'schemaBool_false': {},
+              'ifThenElseValidation_then': {},
+              'ifThenElseValidation_else': {},
             },
           },
           'rating': {'type': 'integer'},
@@ -82,8 +123,16 @@ main() {
 
   final movies = {
     'movies': {
-      'the mission': {'title': 'The Mission', 'year_made': 1986, 'rating': 5},
-      'troll 2': {'title': 'Troll 2', 'year_made': 1990, 'rating': 2},
+      'the mission': {
+        'title': 'The Mission',
+        'year_made': 2010,
+        'rating': 5,
+      },
+      'troll 2': {
+        'title': 'Troll 2',
+        'year_made': 2025,
+        'rating': 2,
+      },
     }
   };
 
