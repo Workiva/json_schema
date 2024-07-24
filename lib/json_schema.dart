@@ -43,4 +43,5 @@ export 'package:json_schema/src/json_schema/models/ref_provider.dart' show RefPr
 export 'package:json_schema/src/json_schema/models/schema_type.dart' show SchemaType;
 export 'package:json_schema/src/json_schema/models/schema_version.dart' show SchemaVersion;
 export 'package:json_schema/src/json_schema/models/validation_context.dart' show ValidationContext;
+export 'package:json_schema/src/json_schema/models/validation_results.dart' show ValidationResults;
 export 'package:json_schema/src/json_schema/validator.dart' show Validator, ValidationError;
