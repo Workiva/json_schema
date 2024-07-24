@@ -1,6 +1,3 @@
-## 5.1.8
-- export `ValidationResults` (part of public api)
-
 ## 5.1.2
 - Widen range on `http` to include 1.0.0
 
