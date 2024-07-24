@@ -1,3 +1,9 @@
+## 5.2.0
+- [Avoid unnecessary null pointer exception if reference schema is given](https://github.com/Workiva/json_schema/pull/188)
+- [Fix ValidationResults.toString().](https://github.com/Workiva/json_schema/pull/189)
+- [Mark an `additionalProperty` as evaluated.](https://github.com/Workiva/json_schema/pull/191)
+- [Export ValidationResults as part of the public API](https://github.com/Workiva/json_schema/pull/192)
+
 ## 5.1.2
 - Widen range on `http` to include 1.0.0
 
