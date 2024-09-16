@@ -52,7 +52,9 @@ class ValidationResults {
 
   @override
   String toString() {
-    return '${errors.isEmpty ? 'VALID' : 'INVALID'}${errors.isEmpty ? ', Errors: $errors' : ''}${warnings.isEmpty ? ', Warnings: $warnings' : ''}';
+    return '${errors.isEmpty ? 'VALID' : 'INVALID'}'
+        '${errors.isEmpty ? '' : ', Errors: $errors'}'
+        '${warnings.isEmpty ? '' : ', Warnings: $warnings'}';
   }
 
   /// Whether the [Instance] was valid against its [JsonSchema]
