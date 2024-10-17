@@ -58,16 +58,16 @@ class ValidationError {
   ValidationError._(this.instancePath, this.schemaPath, this.message);
 
   /// Path in the instance data to the key where this error occurred
-  String? instancePath;
+  String instancePath;
 
   /// Path to the key in the schema containing the rule that produced this error
-  String? schemaPath;
+  String schemaPath;
 
   /// A human-readable message explaining why validation failed
   String message;
 
   @override
-  toString() => '${instancePath!.isEmpty ? '# (root)' : instancePath}: $message';
+  toString() => '${instancePath.isEmpty ? '# (root)' : instancePath}: $message';
 }
 
 /// Initialized with schema, validates instances against it
@@ -855,14 +855,14 @@ class Validator {
     return oldParent;
   }
 
-  void _err(String msg, String? instancePath, String schemaPath) {
+  void _err(String msg, String instancePath, String schemaPath) {
     schemaPath = schemaPath.replaceFirst('#', '');
     _errors.add(ValidationError._(instancePath, schemaPath, msg));
     if (!_reportMultipleErrors) throw FormatException(msg);
   }
 
-  void _warn(String msg, String? instancePath, String? schemaPath) {
-    schemaPath = schemaPath?.replaceFirst('#', '');
+  void _warn(String msg, String instancePath, String schemaPath) {
+    schemaPath = schemaPath.replaceFirst('#', '');
     _warnings.add(ValidationError._(instancePath, schemaPath, msg));
   }
 
