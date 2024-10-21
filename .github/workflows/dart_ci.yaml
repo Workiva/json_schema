@@ -38,4 +38,7 @@ jobs:
       - name: Publish - dry run
         if: ${{ matrix.sdk == 'stable' }}
         run: dart pub publish --dry-run --skip-validation
-
+      - name: Test 'dart fix'
+        # if one of these tests stops working in a future Dart SDK, it may be
+        # fine to keep entries in lib/fix_data.yaml and just remove the tests.
+        run: dart fix --compare-to-golden test_fixes/

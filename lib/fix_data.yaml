@@ -1,0 +1,22 @@
+version: 1
+transforms:
+- title: Rename to validate
+  date: 2024-10-15
+  element:
+    uris:
+    - json_schema.dart
+    method: validateWithResults
+    inClass: Validator
+  changes:
+  - kind: rename
+    newName: validate
+- title: Rename to validate
+  date: 2024-10-15
+  element:
+    uris:
+    - json_schema.dart
+    method: validateWithResults
+    inClass: JsonSchema
+  changes:
+  - kind: rename
+    newName: validate
