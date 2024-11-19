@@ -153,6 +153,9 @@ class Validator {
         throw ArgumentError('JSON instance provided to validate is not valid JSON.');
       }
     }
+    if (data is! Instance) {
+      data = Instance(data);
+    }
 
     _reportMultipleErrors = reportMultipleErrors;
     _errors = [];
@@ -511,7 +514,8 @@ class Validator {
       // Validate property names against the provided schema, if any.
       final propertyNamesSchema = schema.propertyNamesSchema;
       if (propertyNamesSchema != null) {
-        _validate(propertyNamesSchema, k);
+        final propertyNamesInstance = Instance(k, path: '${instance.path}/$k');
+        _validate(propertyNamesSchema, propertyNamesInstance);
       }
 
       final newInstance = Instance(v, path: '${instance.path}/$k');
@@ -660,11 +664,7 @@ class Validator {
     _refsEncountered.remove(irp);
   }
 
-  void _validate(JsonSchema schema, dynamic instance) {
-    if (instance is! Instance) {
-      instance = Instance(instance);
-    }
-
+  void _validate(JsonSchema schema, Instance instance) {
     if (schema.unevaluatedItems != null) {
       var length = instance.data is List ? instance.data.length : 0;
       _pushEvaluatedItemsContext(length);
