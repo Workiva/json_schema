@@ -495,6 +495,27 @@ void main() {
       expect(errors[0].message, contains('type'));
     });
 
+    test('Object propertyNames', () {
+      final schema = createObjectSchema({
+        'propertyNames': {
+          'maxLength': 7,
+        }
+      });
+      final errors = schema.validate({
+        'someKey': {
+          'foo': true,
+          'foobar': true,
+          // property name "foobarbar" is longer maxLength of 7
+          'foobarbar': true,
+        }
+      }).errors;
+
+      expect(errors.length, 1);
+      expect(errors[0].instancePath, '/someKey/foobarbar');
+      expect(errors[0].schemaPath, '/properties/someKey/propertyNames');
+      expect(errors[0].message, contains('maxLength'));
+    });
+
     test('Object additional properties not allowed', () {
       final schema = createObjectSchema({
         'properties': {
