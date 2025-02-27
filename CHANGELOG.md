@@ -1,3 +1,7 @@
+## 5.2.1
+
+- [Add 'idn-email' format validation]()
+
 ## 5.2.0
 - [Avoid unnecessary null pointer exception if reference schema is given](https://github.com/Workiva/json_schema/pull/188)
 - [Fix ValidationResults.toString().](https://github.com/Workiva/json_schema/pull/189)
