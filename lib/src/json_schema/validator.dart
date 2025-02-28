@@ -42,26 +42,28 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:json_schema/src/json_schema/formats/validators.dart';
+import 'package:json_schema/src/json_schema/json_schema.dart';
 import 'package:json_schema/src/json_schema/models/concrete_validation_context.dart';
 import 'package:json_schema/src/json_schema/models/instance.dart';
 import 'package:json_schema/src/json_schema/models/instance_ref_pair.dart';
+import 'package:json_schema/src/json_schema/models/schema_type.dart';
 import 'package:json_schema/src/json_schema/models/schema_version.dart';
 import 'package:json_schema/src/json_schema/models/validation_results.dart';
 import 'package:logging/logging.dart';
 
-import 'package:json_schema/src/json_schema/json_schema.dart';
-import 'package:json_schema/src/json_schema/models/schema_type.dart';
-
 final Logger _logger = Logger('Validator');
 
 class ValidationError {
-  ValidationError._(this.instancePath, this.schemaPath, this.message);
+  ValidationError._(this.instancePath, this.schemaPath, this.message, {this.customMessage});
 
   /// Path in the instance data to the key where this error occurred
   String instancePath;
 
   /// Path to the key in the schema containing the rule that produced this error
   String schemaPath;
+
+  /// A custom error message
+  Map<dynamic, dynamic>? customMessage;
 
   /// A human-readable message explaining why validation failed
   String message;
@@ -117,7 +119,8 @@ class Validator {
 
   final Set<InstanceRefPair> _refsEncountered = {};
 
-  get _evaluatedProperties => _evaluatedPropertiesContext.isNotEmpty ? _evaluatedPropertiesContext.last : <Instance>{};
+  get _evaluatedProperties =>
+      _evaluatedPropertiesContext.isNotEmpty ? _evaluatedPropertiesContext.last : <Instance>{};
 
   @Deprecated('4.0, to be removed in 5.0, use validate() instead.')
   ValidationResults? validateWithResults(dynamic instance,
@@ -182,7 +185,9 @@ class Validator {
       return instance is String;
     } else if (type == SchemaType.integer) {
       return instance is int ||
-          (schema.schemaVersion >= SchemaVersion.draft6 && instance is num && instance.remainder(1) == 0);
+          (schema.schemaVersion >= SchemaVersion.draft6 &&
+              instance is num &&
+              instance.remainder(1) == 0);
     } else if (type == SchemaType.number) {
       return instance is num;
     } else if (type == SchemaType.array) {
@@ -204,21 +209,35 @@ class Validator {
 
     if (exclusiveMaximum != null) {
       if (n! >= exclusiveMaximum) {
-        _err('exclusiveMaximum exceeded ($n >= $exclusiveMaximum)', instance.path, schema.path!);
+        _err('exclusiveMaximum exceeded ($n >= $exclusiveMaximum)', instance.path, schema.path!,
+            customMessage: {
+              ...?schema.customMessage?['numberValidation_exclusiveMaximum'],
+              ...?schema.customMessage?['general_message'],
+            });
       }
     } else if (maximum != null) {
       if (n! > maximum) {
-        _err('maximum exceeded ($n > $maximum)', instance.path, schema.path!);
+        _err('maximum exceeded ($n > $maximum)', instance.path, schema.path!, customMessage: {
+          ...?schema.customMessage?['numberValidation_maximum'],
+          ...?schema.customMessage?['general_message'],
+        });
       }
     }
 
     if (exclusiveMinimum != null) {
       if (n! <= exclusiveMinimum) {
-        _err('exclusiveMinimum violated ($n <= $exclusiveMinimum)', instance.path, schema.path!);
+        _err('exclusiveMinimum violated ($n <= $exclusiveMinimum)', instance.path, schema.path!,
+            customMessage: {
+              ...?schema.customMessage?['numberValidation_exclusiveMinimum'],
+              ...?schema.customMessage?['general_message'],
+            });
       }
     } else if (minimum != null) {
       if (n! < minimum) {
-        _err('minimum violated ($n < $minimum)', instance.path, schema.path!);
+        _err('minimum violated ($n < $minimum)', instance.path, schema.path!, customMessage: {
+          ...?schema.customMessage?['numberValidation_minimum'],
+          ...?schema.customMessage?['general_message'],
+        });
       }
     }
 
@@ -226,14 +245,26 @@ class Validator {
     if (multipleOf != null) {
       if (multipleOf is int && n is int) {
         if (0 != n % multipleOf) {
-          _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path!);
+          _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path!,
+              customMessage: {
+                ...?schema.customMessage?['numberValidation_multipleOf'],
+                ...?schema.customMessage?['general_message'],
+              });
         }
       } else {
         final double result = n! / multipleOf;
         if (result == double.infinity) {
-          _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path!);
+          _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path!,
+              customMessage: {
+                ...?schema.customMessage?['numberValidation_multipleOf'],
+                ...?schema.customMessage?['general_message'],
+              });
         } else if (result.truncate() != result) {
-          _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path!);
+          _err('multipleOf violated ($n % $multipleOf)', instance.path, schema.path!,
+              customMessage: {
+                ...?schema.customMessage?['numberValidation_multipleOf'],
+                ...?schema.customMessage?['general_message'],
+              });
         }
       }
     }
@@ -243,14 +274,25 @@ class Validator {
     final typeList = schema.typeList;
     if (typeList != null && typeList.isNotEmpty) {
       if (!typeList.any((type) => _typeMatch(type, schema, instance.data))) {
-        _err('type: wanted $typeList got $instance', instance.path, schema.path!);
+        _err('type: wanted $typeList got $instance', instance.path, schema.path!, customMessage: {
+          ...?schema.customMessage?['typeValidation'],
+          ...?schema.customMessage?['general_message'],
+        });
       }
     }
   }
 
   void _constValidation(JsonSchema schema, dynamic instance) {
     if (schema.hasConst && !DeepCollectionEquality().equals(instance.data, schema.constValue)) {
-      _err('const violated $instance', instance.path, schema.path!);
+      _err(
+        'const violated $instance',
+        instance.path,
+        schema.path!,
+        customMessage: {
+          ...?schema.customMessage?['constValidation'],
+          ...?schema.customMessage?['general_message'],
+        },
+      );
     }
   }
 
@@ -260,7 +302,10 @@ class Validator {
       try {
         enumValues!.singleWhere((v) => DeepCollectionEquality().equals(instance.data, v));
       } on StateError {
-        _err('enum violated $instance', instance.path, schema.path!);
+        _err('enum violated $instance', instance.path, schema.path!, customMessage: {
+          ...?schema.customMessage?['enumValidation'],
+          ...?schema.customMessage?['general_message'],
+        });
       }
     }
   }
@@ -272,7 +317,8 @@ class Validator {
   }
 
   void _validateCustomSetAttributes(JsonSchema schema, Instance instance) {
-    final context = ConcreteValidationContext(instance.path, schema.path!, _err, _warn, schema.schemaVersion);
+    final context =
+        ConcreteValidationContext(instance.path, schema.path!, _err, _warn, schema.schemaVersion);
     // ignore: deprecated_member_use_from_same_package
     schema.customAttributeValidators.forEach((keyword, validator) {
       // ignore: unused_local_variable
@@ -285,13 +331,24 @@ class Validator {
     final minLength = schema.minLength;
     final maxLength = schema.maxLength;
     if (maxLength is int && actual > maxLength) {
-      _err('maxLength exceeded ($instance vs $maxLength)', instance.path, schema.path!);
+      _err('maxLength exceeded ($instance vs $maxLength)', instance.path, schema.path!,
+          customMessage: {
+            ...?schema.customMessage?['stringValidation_maxLength'],
+            ...?schema.customMessage?['general_message'],
+          });
     } else if (minLength is int && actual < minLength) {
-      _err('minLength violated ($instance vs $minLength)', instance.path, schema.path!);
+      _err('minLength violated ($instance vs $minLength)', instance.path, schema.path!,
+          customMessage: {
+            ...?schema.customMessage?['stringValidation_minLength'],
+            ...?schema.customMessage?['general_message'],
+          });
     }
     final pattern = schema.pattern;
     if (pattern != null && !pattern.hasMatch(instance.data)) {
-      _err('pattern violated ($instance vs $pattern)', instance.path, schema.path!);
+      _err('pattern violated ($instance vs $pattern)', instance.path, schema.path!, customMessage: {
+        ...?schema.customMessage?['stringValidation_pattern'],
+        ...?schema.customMessage?['general_message'],
+      });
     }
   }
 
@@ -354,7 +411,11 @@ class Validator {
             }
           } else if (additionalItemsBool != null) {
             if (!additionalItemsBool && actual > end) {
-              _err('additionalItems false', instance.path, '${schema.path!}/additionalItems');
+              _err('additionalItems false', instance.path, '${schema.path!}/additionalItems',
+                  customMessage: {
+                    ...?schema.customMessage?['itemsValidation_additionalItems'],
+                    ...?schema.customMessage?['general_message'],
+                  });
             } else {
               // All the items in this list have been evaluated.
               _setAllItemsAsEvaluated();
@@ -367,9 +428,15 @@ class Validator {
     final maxItems = schema.maxItems;
     final minItems = schema.minItems;
     if (maxItems is int && actual > maxItems) {
-      _err('maxItems exceeded ($actual vs $maxItems)', instance.path, schema.path!);
+      _err('maxItems exceeded ($actual vs $maxItems)', instance.path, schema.path!, customMessage: {
+        ...?schema.customMessage?['itemsValidation_maxItems'],
+        ...?schema.customMessage?['general_message'],
+      });
     } else if (minItems is int && actual < minItems) {
-      _err('minItems violated ($actual vs $minItems)', instance.path, schema.path!);
+      _err('minItems violated ($actual vs $minItems)', instance.path, schema.path!, customMessage: {
+        ...?schema.customMessage?['itemsValidation_minItems'],
+        ...?schema.customMessage?['general_message'],
+      });
     }
 
     if (schema.uniqueItems) {
@@ -378,7 +445,11 @@ class Validator {
       for (int i = 0; i < penultimate; i++) {
         for (int j = i + 1; j < end; j++) {
           if (DeepCollectionEquality().equals(instance.data[i], instance.data[j])) {
-            _err('uniqueItems violated: $instance [$i]==[$j]', instance.path, schema.path!);
+            _err('uniqueItems violated: $instance [$i]==[$j]', instance.path, schema.path!,
+                customMessage: {
+                  ...?schema.customMessage?['itemsValidation_uniqueItems'],
+                  ...?schema.customMessage?['general_message'],
+                });
           }
         }
       }
@@ -398,13 +469,22 @@ class Validator {
         }
       }
       if (minContains is int && containsItems.length < minContains) {
-        _err('minContains violated: $instance', instance.path, schema.path!);
+        _err('minContains violated: $instance', instance.path, schema.path!, customMessage: {
+          ...?schema.customMessage?['itemsValidation_minContains'],
+          ...?schema.customMessage?['general_message'],
+        });
       }
       if (maxContains is int && containsItems.length > maxContains) {
-        _err('maxContains violated: $instance', instance.path, schema.path!);
+        _err('maxContains violated: $instance', instance.path, schema.path!, customMessage: {
+          ...?schema.customMessage?['itemsValidation_maxContains'],
+          ...?schema.customMessage?['general_message'],
+        });
       }
       if (containsItems.isEmpty && !(minContains is int && minContains == 0)) {
-        _err('contains violated: $instance', instance.path, schema.path!);
+        _err('contains violated: $instance', instance.path, schema.path!, customMessage: {
+          ...?schema.customMessage?['itemsValidation_contains'],
+          ...?schema.customMessage?['general_message'],
+        });
       }
     }
   }
@@ -415,7 +495,11 @@ class Validator {
       final actual = instance.data.length;
       if (unevaluatedItems.schemaBool != null) {
         if (unevaluatedItems.schemaBool == false && actual > _evaluatedItemCount) {
-          _err('unevaluatedItems false', instance.path, '${schema.path!}/unevaluatedItems');
+          _err('unevaluatedItems false', instance.path, '${schema.path!}/unevaluatedItems',
+              customMessage: {
+                ...?schema.customMessage?['validateUnevaluatedItems'],
+                ...?schema.customMessage?['general_message'],
+              });
         }
       } else {
         var evaluatedItemsList = _evaluatedItemsContext.last;
@@ -453,7 +537,11 @@ class Validator {
 
   _validateAllOf(JsonSchema schema, Instance instance) {
     if (!schema.allOf.every((s) => _validateAndCaptureEvaluations(s, instance))) {
-      _err('${schema.path}: allOf violated $instance', instance.path, '${schema.path!}/allOf');
+      _err('${schema.path}: allOf violated $instance', instance.path, '${schema.path!}/allOf',
+          customMessage: {
+            ...?schema.customMessage?['validateAllOf'],
+            ...?schema.customMessage?['general_message'],
+          });
     }
   }
 
@@ -471,7 +559,12 @@ class Validator {
     }
     if (!anyOfValid) {
       // TODO: deal with /anyOf
-      _err('${schema.path}/anyOf: anyOf violated ($instance, ${schema.anyOf})', instance.path, '${schema.path!}/anyOf');
+      _err('${schema.path}/anyOf: anyOf violated ($instance, ${schema.anyOf})', instance.path,
+          '${schema.path!}/anyOf',
+          customMessage: {
+            ...?schema.customMessage?['validateAnyOf'],
+            ...?schema.customMessage?['general_message'],
+          });
     }
   }
 
@@ -480,13 +573,18 @@ class Validator {
       schema.oneOf.map((s) => _validateAndCaptureEvaluations(s, instance)).singleWhere((s) => s);
     } on StateError catch (notOneOf) {
       // TODO consider passing back validation errors from sub-validations
-      _err('${schema.path}/oneOf: violated ${notOneOf.message}', instance.path, '${schema.path!}/oneOf');
+      _err('${schema.path}/oneOf: violated ${notOneOf.message}', instance.path,
+          '${schema.path!}/oneOf');
     }
   }
 
   void _validateNot(JsonSchema schema, Instance instance) {
     if (Validator(schema.notSchema).validate(instance).isValid) {
-      _err('${schema.notSchema?.path}: not violated', instance.path, schema.notSchema!.path!);
+      _err('${schema.notSchema?.path}: not violated', instance.path, schema.notSchema!.path!,
+          customMessage: {
+            ...?schema.customMessage?['validateNot'],
+            ...?schema.customMessage?['general_message'],
+          });
     }
   }
 
@@ -504,11 +602,14 @@ class Validator {
       return;
     }
 
-    validator(ConcreteValidationContext(instance.path, schema.path!, _err, _warn, schema.schemaVersion), instance.data);
+    validator(
+        ConcreteValidationContext(instance.path, schema.path!, _err, _warn, schema.schemaVersion),
+        instance.data);
   }
 
   void _objectPropertyValidation(JsonSchema schema, Instance instance) {
-    final propMustValidate = schema.additionalPropertiesBool != null && !schema.additionalPropertiesBool!;
+    final propMustValidate =
+        schema.additionalPropertiesBool != null && !schema.additionalPropertiesBool!;
 
     instance.data.forEach((k, v) {
       // Validate property names against the provided schema, if any.
@@ -542,7 +643,12 @@ class Validator {
           _validate(additionalPropertiesSchema, newInstance);
           _addEvaluatedProp(newInstance);
         } else if (propMustValidate) {
-          _err('unallowed additional property $k', instance.path, '${schema.path!}/additionalProperties');
+          _err('unallowed additional property $k', instance.path,
+              '${schema.path!}/additionalProperties',
+              customMessage: {
+                ...?schema.customMessage?['objectPropertyValidation'],
+                ...?schema.customMessage?['general_message'],
+              });
         } else if (schema.additionalPropertiesBool == true) {
           _addEvaluatedProp(newInstance);
         }
@@ -554,7 +660,11 @@ class Validator {
     schema.propertyDependencies.forEach((k, dependencies) {
       if (instance.data.containsKey(k)) {
         if (!dependencies.every((prop) => instance.data.containsKey(prop))) {
-          _err('prop $k => $dependencies required', instance.path, '${schema.path!}/dependencies');
+          _err('prop $k => $dependencies required', instance.path, '${schema.path!}/dependencies',
+              customMessage: {
+                ...?schema.customMessage?['propertyDependenciesValidation'],
+                ...?schema.customMessage?['general_message'],
+              });
         } else {
           _addEvaluatedProp(instance);
         }
@@ -566,7 +676,11 @@ class Validator {
     schema.schemaDependencies.forEach((k, otherSchema) {
       if (instance.data.containsKey(k)) {
         if (!_validateAndCaptureEvaluations(otherSchema, instance)) {
-          _err('prop $k violated schema dependency', instance.path, otherSchema.path!);
+          _err('prop $k violated schema dependency', instance.path, otherSchema.path!,
+              customMessage: {
+                ...?schema.customMessage?['schemaDependenciesValidation'],
+                ...?schema.customMessage?['general_message'],
+              });
         } else {
           _addEvaluatedProp(instance);
         }
@@ -580,9 +694,17 @@ class Validator {
     final minProps = schema.minProperties;
     final maxProps = schema.maxProperties;
     if (numProps < minProps) {
-      _err('minProperties violated ($numProps < $minProps)', instance.path, schema.path!);
+      _err('minProperties violated ($numProps < $minProps)', instance.path, schema.path!,
+          customMessage: {
+            ...?schema.customMessage?['objectValidation_minProperties'],
+            ...?schema.customMessage?['general_message'],
+          });
     } else if (maxProps != null && numProps > maxProps) {
-      _err('maxProperties violated ($numProps > $maxProps)', instance.path, schema.path!);
+      _err('maxProperties violated ($numProps > $maxProps)', instance.path, schema.path!,
+          customMessage: {
+            ...?schema.customMessage?['objectValidation_maxProperties'],
+            ...?schema.customMessage?['general_message'],
+          });
     }
 
     // Required Properties
@@ -590,9 +712,19 @@ class Validator {
       for (final prop in schema.requiredProperties!) {
         if (!instance.data.containsKey(prop)) {
           // One error for the root object that contains the missing property.
-          _err('required prop missing: $prop from $instance', instance.path, '${schema.path!}/required');
+          _err('required prop missing: $prop from $instance', instance.path,
+              '${schema.path!}/required',
+              customMessage: {
+                ...?schema.customMessage?['objectValidation_requiredProperties_root'],
+                ...?schema.customMessage?['general_message'],
+              });
           // Another error for the property on the root object. (Allows consumers to identify errors for individual fields)
-          _err('required prop missing: $prop from $instance', '${instance.path}/$prop', '${schema.path!}/required');
+          _err('required prop missing: $prop from $instance', '${instance.path}/$prop',
+              '${schema.path!}/required',
+              customMessage: {
+                ...?schema.customMessage?['objectValidation_requiredProperties_property'],
+                ...?schema.customMessage?['general_message'],
+              });
         }
       }
     }
@@ -722,8 +854,12 @@ class Validator {
     /// If the [JsonSchema] is a bool, always return this value.
     if (schema.schemaBool != null) {
       if (schema.schemaBool == false) {
-        _err('schema is a boolean == false, this schema will never validate. Instance: $instance', instance.path,
-            schema.path!);
+        _err('schema is a boolean == false, this schema will never validate. Instance: $instance',
+            instance.path, schema.path!,
+            customMessage: {
+              ...?schema.customMessage?['schemaBool_false'],
+              ...?schema.customMessage?['general_message'],
+            });
       }
       return;
     }
@@ -762,15 +898,22 @@ class Validator {
         // Bail out early if no "then" is specified.
         if (schema.thenSchema == null) return true;
         if (!_validateAndCaptureEvaluations(schema.thenSchema, instance)) {
-          _err('${schema.path}/then: then violated ($instance, ${schema.thenSchema})', instance.path,
-              '${schema.path!}/then');
+          _err('${schema.path}/then: then violated ($instance, ${schema.thenSchema})',
+              instance.path, '${schema.path!}/then',
+              customMessage: {
+                ...?schema.customMessage?['ifThenElseValidation_then'],
+                ...?schema.customMessage?['general_message'],
+              });
         }
       } else {
         // Bail out early if no "else" is specified.
         if (schema.elseSchema == null) return true;
         if (!_validateAndCaptureEvaluations(schema.elseSchema, instance)) {
-          _err('${schema.path}/else: else violated ($instance, ${schema.elseSchema})', instance.path,
-              '${schema.path!}/else');
+          _err('${schema.path}/else: else violated ($instance, ${schema.elseSchema})',
+              instance.path, '${schema.path!}/else', customMessage: {
+            ...?schema.customMessage?['ifThenElseValidation_else'],
+            ...?schema.customMessage?['general_message']
+          });
         }
       }
       // Return early since we recursively call _validate in these cases.
@@ -793,7 +936,8 @@ class Validator {
 
   bool get _isInEvaluatedItemContext => _evaluatedItemsContext.isNotEmpty;
 
-  bool get _isInEvaluatedItemsOrPropertiesContext => _isInEvaluatedItemContext || _isInEvaluatedPropertiesContext;
+  bool get _isInEvaluatedItemsOrPropertiesContext =>
+      _isInEvaluatedItemContext || _isInEvaluatedPropertiesContext;
 
   _setItemAsEvaluated(int position) {
     if (_isInEvaluatedItemContext) {
@@ -819,7 +963,8 @@ class Validator {
     }
   }
 
-  int? get _evaluatedItemCount => _evaluatedItemsContext.lastOrNull?.where((element) => element).length;
+  int? get _evaluatedItemCount =>
+      _evaluatedItemsContext.lastOrNull?.where((element) => element).length;
 
   //////
   // Helper functions to deal with unevaluatedProperties.
@@ -855,9 +1000,15 @@ class Validator {
     return oldParent;
   }
 
-  void _err(String msg, String instancePath, String schemaPath) {
+  void _err(String msg, String instancePath, String schemaPath,
+      {Map<dynamic, dynamic>? customMessage}) {
     schemaPath = schemaPath.replaceFirst('#', '');
-    _errors.add(ValidationError._(instancePath, schemaPath, msg));
+    _errors.add(ValidationError._(
+      instancePath,
+      schemaPath,
+      msg,
+      customMessage: customMessage,
+    ));
     if (!_reportMultipleErrors) throw FormatException(msg);
   }
 
