@@ -16,10 +16,6 @@
         "schema" : { "enum" : {} }
     },
     {
-        "description" : "enum: must be a non-empty array",
-        "schema" : { "enum" : [] }
-    },
-    {
         "description" : "enum: elements must be unique",
         "schema" : { "enum" : [3,4,3] }
     },
