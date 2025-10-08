@@ -18,7 +18,7 @@ class TypeValidators {
 
   static List uniqueList(String key, dynamic value) {
     int i = 0;
-    final List enumValues = TypeValidators.nonEmptyList(key, value);
+    final List enumValues = TypeValidators.list(key, value);
     for (final _ in enumValues) {
       for (int j = i + 1; j < enumValues.length; j++) {
         if (DeepCollectionEquality().equals(enumValues[i], enumValues[j])) {
